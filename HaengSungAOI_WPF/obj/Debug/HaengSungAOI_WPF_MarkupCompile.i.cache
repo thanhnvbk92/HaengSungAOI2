@@ -1,0 +1,20 @@
+﻿HaengSungAOI_WPF
+
+
+winexe
+C#
+.cs
+F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\
+HaengSungAOI_WPF
+none
+false
+DEBUG;TRACE
+F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\App.xaml
+7182748359
+1151696340
+481381143990
+234500128448
+Views\ErrorListWindow.xaml;Views\HistoryWindow.xaml;Views\MainWindow.xaml;Views\ManualOperations.xaml;Views\ModelConfig.xaml;Views\RobotJogWindow.xaml;Views\SettingsWindow.xaml;
+
+True
+

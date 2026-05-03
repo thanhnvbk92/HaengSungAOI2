@@ -1,0 +1,344 @@
+<Window x:Class="HaengSungAOI_WPF.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HaengSungAOI_WPF"
+        mc:Ignorable="d"
+        Title="Settings - Servo Parameters" Height="800" Width="1920" 
+        Background="#1e1e2f"
+        WindowStartupLocation="CenterOwner"
+        WindowState="Maximized">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <!-- Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Controls -->
+            <RowDefinition Height="*"/>
+            <!-- Parameter Grid -->
+            <RowDefinition Height="50"/>
+            <!-- Footer -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2d2d3c" Padding="20,0">
+            <DockPanel>
+                <TextBlock Text="Servo Parameter Settings" FontSize="24" Foreground="White" 
+                           FontWeight="Bold" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                    <TextBlock x:Name="ConnectionStatusText" Text="PLC: Disconnected" 
+                               Foreground="Orange" FontSize="14" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Control Panel -->
+        <Border Grid.Row="1" Background="#282838" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Feature Toggles -->
+                <!--<StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,20,0">
+                    <CheckBox x:Name="EnableScanOutCheckBox" 
+                              Content="Use Scanout" 
+                              Foreground="White" 
+                              FontSize="14" 
+                              FontWeight="SemiBold"
+                              VerticalAlignment="Center" 
+                              Margin="10,0"
+                              Checked="EnableScanOutCheckBox_Checked"
+                              Unchecked="EnableScanOutCheckBox_Unchecked"/>
+                </StackPanel>-->
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="ReadAllButton" Content="Read All" Width="120" Height="35"
+                            Background="#0A5A0A" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                            Margin="5,0" Click="ReadAllButton_Click"/>
+                    <Button x:Name="WriteAllButton" Content="Write All" Width="120" Height="35"
+                            Background="#8B0000" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                            Margin="5,0" Click="WriteAllButton_Click"/>
+                    <Button x:Name="RefreshButton" Content="Refresh" Width="100" Height="35"
+                            Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                            Margin="5,0" Click="RefreshButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Parameter Grid -->
+        <Border Grid.Row="2" Background="#202030" Margin="10" BorderBrush="#444" BorderThickness="1">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <DataGrid x:Name="ParameterDataGrid"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserReorderColumns="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="All"
+                          RowBackground="#2e2e3e"
+                          AlternatingRowBackground="#383850"
+                          Foreground="White"
+                          Background="#202030"
+                          BorderBrush="#444"
+                          HorizontalGridLinesBrush="#444"
+                          VerticalGridLinesBrush="#444"
+                          FontSize="11"
+                          SelectionMode="Single"
+                          SelectionUnit="Cell">
+                    
+                    <!-- Column Header Style -->
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#2d2d3c"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="Padding" Value="8,8"/>
+                            <Setter Property="BorderBrush" Value="#444"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+
+                    <!-- Row Style -->
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="#2e2e3e"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#4A4A5A"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#3A3A4A"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+
+                    <!-- Cell Style -->
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderBrush" Value="#444"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                            <Setter Property="Padding" Value="5,3"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#4A4A5A"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.CellStyle>
+
+                    <DataGrid.Columns>
+                        <!-- Parameter Name (Fixed Column) -->
+                        <DataGridTextColumn Header="Parameter" Binding="{Binding ParameterName}" 
+                                            Width="150" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Foreground" Value="LightBlue"/>
+                                    <Setter Property="Padding" Value="5,0"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Axis Columns (Dynamic - will be generated in code) -->
+                        <!-- AX1 -->
+                        <DataGridTemplateColumn Header="AX1" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AX1, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AY1 -->
+                        <DataGridTemplateColumn Header="AY1" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AY1, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AC1 -->
+                        <DataGridTemplateColumn Header="AC1" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AC1, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AX2 -->
+                        <DataGridTemplateColumn Header="AX2" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AX2, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AZ2 -->
+                        <DataGridTemplateColumn Header="AZ2" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AZ2, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AX3 -->
+                        <DataGridTemplateColumn Header="AX3" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AX3, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AY3 -->
+                        <DataGridTemplateColumn Header="AY3" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AY3, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AZ4 -->
+                        <DataGridTemplateColumn Header="AZ4" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AZ4, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AC4 -->
+                        <DataGridTemplateColumn Header="AC4" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AC4, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AZ5 -->
+                        <DataGridTemplateColumn Header="AZ5" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AZ5, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AC5 -->
+                        <DataGridTemplateColumn Header="AC5" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AC5, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AZ61 -->
+                        <DataGridTemplateColumn Header="AZ61" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AZ61, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- AZ62 -->
+                        <DataGridTemplateColumn Header="AZ62" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding AZ62, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- CV7 -->
+                        <DataGridTemplateColumn Header="CV7" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding CV7, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="#303040" Foreground="Yellow" BorderBrush="#555"
+                                             Padding="3" HorizontalContentAlignment="Right"
+                                             FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Footer -->
+        <Border Grid.Row="3" Background="#2d2d3c" Padding="20,0">
+            <DockPanel>
+                <TextBlock x:Name="StatusText" Text="Ready" 
+                           Foreground="LightGray" FontSize="12" 
+                           VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                    <Button Content="Close"
+                            Width="100" Height="35"
+                            Margin="10,0"
+                            Background="#232336"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            BorderBrush="#444"
+                            BorderThickness="1"
+                            Click="CloseButton_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,774 @@
+﻿<Window x:Name="MainWindow1" x:Class="HaengSungAOI_WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HaengSungAOI_WPF"
+        xmlns:vm="clr-namespace:VMControls.WPF.Release;assembly=VMControls.WPF.Release"
+        xmlns:loc="clr-namespace:HaengSungAOI_WPF"
+        xmlns:svgc1="http://sharpvectors.codeplex.com/svgc/"
+        mc:Ignorable="d"
+        Title="AOI Interface" Height="1080" Width="1920" WindowState="Maximized"
+        Topmost="False"
+        Background="#1e1e2f" WindowStartupLocation="CenterScreen" KeyDown="Window_KeyDown" Loaded="MainWindow1_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <!-- Header -->
+            <RowDefinition Height="*"/>
+            <!-- Nội dung -->
+            <RowDefinition Height="30"/>
+            <!-- Status Bar -->
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <!-- Sidebar - increased width for buttons -->
+            <ColumnDefinition Width="*"/>
+            <!-- Nội dung chính -->
+        </Grid.ColumnDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Background="#2d2d3c" Padding="20,0">
+            <DockPanel>
+                <TextBlock Text="AOI MACHINE - PCB Inspection System" FontSize="24" Foreground="White" 
+                           FontWeight="Bold" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+
+                <!-- Current Model Display -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left" Margin="40,0,0,0">
+                    <TextBlock Text="Current Model:" Foreground="LightGray" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Border Background="#232336" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3">
+                        <TextBlock x:Name="CurrentModelNameTextBlock" Text="No Model Selected" 
+                                   Foreground="#87CEEB" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Current EBR Display -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left" Margin="20,0,0,0">
+                    <TextBlock Text="EBR:" Foreground="LightGray" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Border Background="#232336" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3" Cursor="Hand" MouseLeftButtonDown="CurrentEbrTextBlock_MouseLeftButtonDown" ToolTip="Click để nhập EBR mới">
+                        <TextBlock x:Name="CurrentEbrTextBlock" Text="{Binding CurrentEbrValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                   Foreground="#FFD700" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Border>
+                    <Button Content="Reset EBR" Margin="8,0,0,0" Padding="10,2"
+                            Background="#3A3A4D" Foreground="White" BorderBrush="#555"
+                            Click="ResetEbr_Click" />
+                    <CheckBox x:Name="EnableScanOutCheckBox" Content="Bật ScanOut" Foreground="LightGray" FontSize="14" VerticalAlignment="Center" Margin="15,0,0,0" Checked="EnableScanOutCheckBox_Checked" Unchecked="EnableScanOutCheckBox_Unchecked" />
+                    <CheckBox x:Name="IsByPassCheckBox" Content="Bật ByPass" Foreground="LightGray" FontSize="14" VerticalAlignment="Center" Margin="15,0,0,0" Checked="IsByPassCheckBox_Checked" Unchecked="IsByPassCheckBox_Unchecked" />
+                </StackPanel>
+
+                <!-- Error Status Display -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left" Margin="30,0,0,0">
+                    <TextBlock Text="Status:" Foreground="LightGray" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Border Background="#232336" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3">
+                        <TextBlock x:Name="ErrorStatusTextBlock" Text="System OK" 
+                                   Foreground="LimeGreen" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Flag Buttons and User Info -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right" Margin="0,0,10,0">
+                    <Button Width="54" Height="36" Margin="4,0" ToolTip="Vietnamese"
+                            Background="Transparent" BorderBrush="Transparent" BorderThickness="0" Padding="0" Focusable="False"
+                            Click="FlagVN_Click">
+                        <Image Width="54" Height="30" Stretch="Uniform" Source="resource/icons/flags/VN.png"/>
+                    </Button>
+                    <Button Width="54" Height="36" Margin="4,0" ToolTip="Korean"
+                            Background="Transparent" BorderBrush="Transparent" BorderThickness="0" Padding="0" Focusable="False"
+                            Click="FlagKR_Click">
+                        <Image Width="54" Height="30" Stretch="Uniform" Source="resource/icons/flags/KR.png"/>
+                    </Button>
+                    <Button Width="54" Height="36" Margin="4,0" ToolTip="English"
+                            Background="Transparent" BorderBrush="Transparent" BorderThickness="0" Padding="0" Focusable="False"
+                            Click="FlagEN_Click">
+                        <Image Width="54" Height="30" Stretch="Uniform" Source="resource/icons/flags/GB.png"/>
+                    </Button>
+                    <TextBlock Text="User: admin" Foreground="LightGray" VerticalAlignment="Center"
+                               HorizontalAlignment="Right" Margin="16,0,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Sidebar Menu with HMI Control Buttons -->
+        <ScrollViewer Grid.Row="1" Grid.Column="0" Background="#282838" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="SidebarStackPanel" VerticalAlignment="Stretch">
+                <!-- Existing Start/Stop buttons -->
+
+                <!-- Separator -->
+                <Border Height="2" Background="#444" Margin="5,10"/>
+                
+                <!-- HMI Control Buttons Section -->
+                <TextBlock Text="HMI CONTROLS" Foreground="LightGray" FontSize="11" FontWeight="Bold" 
+                           Margin="5,5,5,2" HorizontalAlignment="Center"/>
+                
+                <!-- Auto PB - MW0 / MW200 -->
+                <Button x:Name="btnHMIAuto" Margin="5,3" Height="35" Tag="HMI_Auto_PB"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1" 
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIAuto" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Auto" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Manual PB - MW1 / MW201 -->
+                <Button x:Name="btnHMIManual" Margin="5,3" Height="35" Tag="HMI_Manual_PB"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIManual" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Manual" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Reset PB - MW2 / MW202 -->
+                <Button x:Name="btnHMIReset" Margin="5,3" Height="35" Tag="HMI_Reset_PB"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIReset" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Reset" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Origin - MW3 / MW203 -->
+                <Button x:Name="btnHMIOrigin" Margin="5,3" Height="35" Tag="HMI_Origin"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIOrigin" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Origin" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Start - MW4 / MW204 -->
+                <Button x:Name="btnHMIStart" Margin="5,3" Height="35" Tag="HMI_Start"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIStart" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Start" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Stop - MW5 / MW205 -->
+                <Button x:Name="btnHMIStop" Margin="5,3" Height="35" Tag="HMI_Stop"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIStop" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Pause System - MW6 / MW206 -->
+                <!--<Button x:Name="btnHMIPause" Margin="5,3" Height="35" Tag="HMI_Pause_System"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIPause" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Pause" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>-->
+                
+                <!-- Single Block Mode - MW7 / MW207 -->
+                <!--<Button x:Name="btnHMISingleBlock" Margin="5,3" Height="35" Tag="HMI_Single_Block_Mode"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMISingleBlock" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Single Block" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>-->
+                
+                <!-- Next Step PB - MW8 / MW208 -->
+                <!--<Button x:Name="btnHMINextStep" Margin="5,3" Height="35" Tag="HMI_Next_Step_PB"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMINextStep" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Next Step" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>-->
+                
+                <!-- Buzzer Off - MW9 / MW209 -->
+                <Button x:Name="btnHMIBuzzerOff" Margin="5,3" Height="35" Tag="HMI_Buzzer_Off"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIBuzzerOff" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Buzzer Off" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- End Cycle - MW10 / MW210 -->
+                <Button x:Name="btnHMIEndCycle" Margin="5,3" Height="35" Tag="HMI_End_Cycle"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="#444" BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMIEndCycle" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Yêu cầu lấy tray" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+                <!-- Counter Reset PB - MW11 -->
+                <Button x:Name="btnHMICounterReset" Margin="5,3" Height="35" Tag="HMI_Counter_Reset_PB"
+                        Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
+                        BorderBrush="Red"  BorderThickness="1"
+                        PreviewMouseDown="HMIButton_MouseDown" PreviewMouseUp="HMIButton_MouseUp">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#232336"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="lampHMICounterReset" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                            <TextBlock Text="Xác nhận đã lấy hết tray" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                
+              
+                
+                <!-- Separator -->
+                <Border Height="2" Background="#444" Margin="5,10"/>
+                
+                <!-- Existing menu buttons -->
+                <!--<Button Margin="0,5" Height="40"
+                        Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                        Focusable="False" Content="{loc:Loc StringManual}" Click="Manual_Click"/>-->
+                <!--<Button Margin="0,5" Height="40"
+                        Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                        Focusable="False" Content="{loc:Loc StringHistory}" Click="History_Click"/>-->
+                <Button x:Name="ErrorListButton" Margin="0,5" Height="40"
+                        Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                        Focusable="False" Content="Error List" Click="ErrorList_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Background" Value="#4A4A4A"/>
+                                    <Setter Property="Foreground" Value="#808080"/>
+                                    <Setter Property="Opacity" Value="0.6"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <!--<Button Margin="0,5" Height="40"
+                        Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                        Focusable="False" Content="{loc:Loc StringReport}"/>-->
+                <Button Margin="0,5" Height="40"
+                        Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                        Focusable="False" Content="{loc:Loc StringModel}" Click="Model_Click"/>
+                <Button x:Name="btnSetting" Margin="0,5" Height="40"
+                        Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
+                        Focusable="False" Content="{loc:Loc StringSetting}" Click="btnSetting_Click"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Grid.Column="1" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
+                <!-- Camera view -->
+                <RowDefinition Height="1*"/>
+                <!-- AOI result table -->
+            </Grid.RowDefinitions>
+
+            <!-- Camera Views -->
+            <Grid Grid.Row="0">
+                <vm:VmFrontendControl x:Name="FrontEnd"></vm:VmFrontendControl>
+            </Grid>
+
+            <!-- AOI Error & Packing Tables -->
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <!-- historyDataGrid -->
+                    <RowDefinition Height="*"/>
+                    <!-- PackingDataGrid -->
+                </Grid.RowDefinitions>
+
+                <DataGrid x:Name="historyDataGrid" Grid.Row="0" Margin="5" AutoGenerateColumns="False" HeadersVisibility="Column"
+                          RowBackground="#2e2e3e" AlternatingRowBackground="#383850"
+                          Foreground="White" Background="#202030" BorderBrush="#444"
+                          FontSize="12" CanUserAddRows="False" IsReadOnly="True"
+                          SelectionMode="Single">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="STT" Binding="{Binding STT}" Width="50"/>
+                        <DataGridTextColumn Header="PID" Binding="{Binding PCBCode}" Width="150"/>
+                        <DataGridTextColumn Header="Model" Binding="{Binding ModelName}" Width="120"/>
+                        <DataGridTextColumn Header="Time" Binding="{Binding InspectionDateTimeString}" Width="150"/>
+                        <DataGridTextColumn Header="Tack Time" Binding="{Binding InspectionTimeString}" Width="80"/>
+                        <DataGridTextColumn Header="Station" Binding="{Binding Station}" Width="110"/>
+                        <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="PASS">
+                                            <Setter Property="Foreground" Value="LightGreen"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Trigger>
+                                        <Trigger Property="Text" Value="FAIL">
+                                            <Setter Property="Foreground" Value="LightCoral"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Trigger>
+                                        <Trigger Property="Text" Value="OK">
+                                            <Setter Property="Foreground" Value="LightGreen"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Trigger>
+                                        <Trigger Property="Text" Value="NG">
+                                            <Setter Property="Foreground" Value="LightCoral"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                        <DataGridTemplateColumn Header="Image" Width="60">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="View 📷" Padding="5,2" Background="#444" Foreground="White" BorderThickness="0" 
+                                            Click="ViewImage_Click" Tag="{Binding ImagePath}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- PCB and Tray Dashboard -->
+                <Grid Grid.Row="1" Margin="5,15,5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- PCB Slot Display -->
+                    <Border Grid.Column="0" Background="#2a2a3c" BorderBrush="#555" BorderThickness="1" CornerRadius="8" Margin="0,0,10,0" Padding="10">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" BlurRadius="10" Opacity="0.3" ShadowDepth="2"/>
+                        </Border.Effect>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="CURRENT LOT" Foreground="#A0A0B0" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                            <Border Cursor="Hand" ToolTip="Click để chỉnh sửa Tray Quantity"
+                                    MouseLeftButtonDown="PCBTrayQuantityLabel_MouseLeftButtonDown"
+                                    BorderBrush="#444" BorderThickness="0,0,0,3" Padding="4,0">
+                                <TextBlock x:Name="PCBSlotTextBlock" Text="0 / 48" 
+                                           Foreground="#87CEEB" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="✎ click to edit" Foreground="#555577" FontSize="11"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- PCB Tray Quantity -->
+                    <Border Grid.Column="1" Background="#2a2a3c" BorderBrush="#555" BorderThickness="1" CornerRadius="8" Margin="5,0,5,0" Padding="10">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" BlurRadius="10" Opacity="0.3" ShadowDepth="2"/>
+                        </Border.Effect>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="CURRENT TRAY SLOT" Foreground="#A0A0B0" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="PCBTrayQuantityLabel" Text="0"
+                                       Foreground="#00FF7F" FontSize="42" FontWeight="Bold"
+                                       HorizontalAlignment="Center" MinWidth="80" TextAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Blank Tray Quantity -->
+                    <Border Grid.Column="2" Background="#2a2a3c" BorderBrush="#555" BorderThickness="1" CornerRadius="8" Margin="10,0,0,0" Padding="10">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" BlurRadius="10" Opacity="0.3" ShadowDepth="2"/>
+                        </Border.Effect>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="CURRENT TRAY" Foreground="#A0A0B0" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="BlankTrayQuantityTextBlock" Text="0" 
+                                       Foreground="#FFD700" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Background="#2d2d3c" Padding="5">
+            <DockPanel>
+                <TextBlock x:Name="MachineStatusTextBlock" Text="Machine: Stopped" 
+                           Foreground="Orange" FontSize="12" FontWeight="Bold" 
+                           VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                
+                    <!-- Removed PCB Slot and Tray Info panel from Status Bar -->
+                
+                <TextBlock x:Name="ErrorStatus" Text="" 
+                           Foreground="Orange" FontSize="12" FontWeight="Bold" Width="37" />
+                <TextBlock Text="Robot: OK | Camera: Connected | Log: Đang ghi | Network: Stable"
+                           Foreground="LightGray" FontSize="12" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DockPanel.Dock="Right"/>
+            </DockPanel>
+        </Border>
+
+        <!-- ══ LOADING OVERLAY ══════════════════════════════════════════════
+             Phủ toàn bộ cửa sổ, ZIndex cao nhất.
+             Ẩn bằng: LoadingOverlay.Visibility = Visibility.Collapsed  -->
+        <Grid x:Name="LoadingOverlay"
+              Grid.Row="0" Grid.RowSpan="3"
+              Grid.Column="0" Grid.ColumnSpan="2"
+              Panel.ZIndex="9999"
+              Background="#CC0D0D1A"
+              Visibility="Visible">
+
+            <Border Background="#1e1e2f"
+                    CornerRadius="16"
+                    Padding="60,50"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinWidth="380">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="40" Opacity="0.7" ShadowDepth="0"/>
+                </Border.Effect>
+
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                    <!-- Logo / Title -->
+                    <TextBlock Text="AOI MACHINE"
+                               Foreground="#87CEEB"
+                               FontSize="22" FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,6"/>
+                    <TextBlock Text="PCB Inspection System"
+                               Foreground="#6070A0"
+                               FontSize="13"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,32"/>
+
+                    <!-- Spinner — vòng tròn xoay -->
+                    <Grid Width="64" Height="64"
+                          HorizontalAlignment="Center"
+                          Margin="0,0,0,24">
+                        <Ellipse Width="64" Height="64"
+                                 Stroke="#2a2a3c" StrokeThickness="6"/>
+                        <Ellipse Width="64" Height="64"
+                                 StrokeThickness="6"
+                                 StrokeDashArray="50 150"
+                                 StrokeDashOffset="0"
+                                 StrokeEndLineCap="Round"
+                                 StrokeStartLineCap="Round">
+                            <Ellipse.Stroke>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#87CEEB" Offset="0"/>
+                                    <GradientStop Color="#4488CC" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Ellipse.Stroke>
+                            <Ellipse.RenderTransform>
+                                <RotateTransform x:Name="SpinnerRotate" Angle="0" CenterX="32" CenterY="32"/>
+                            </Ellipse.RenderTransform>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="SpinnerRotate"
+                                                Storyboard.TargetProperty="Angle"
+                                                From="0" To="360"
+                                                Duration="0:0:1"
+                                                RepeatBehavior="Forever"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                    </Grid>
+
+                    <!-- Trạng thái khởi tạo -->
+                    <TextBlock x:Name="LoadingStatusText"
+                               Text="Đang khởi tạo hệ thống..."
+                               Foreground="#A0B0CC"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,8"/>
+
+                    <!-- Progress dots animation -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Ellipse Width="7" Height="7" Fill="#4488CC" Margin="4,0">
+                            <Ellipse.RenderTransform><TranslateTransform x:Name="Dot1"/></Ellipse.RenderTransform>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Dot1" Storyboard.TargetProperty="Y">
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0.0" Value="0"/>
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0.2" Value="-8" KeySpline="0.4,0,0.6,1"/>
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0.4" Value="0" KeySpline="0.4,0,0.6,1"/>
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0.9" Value="0"/>
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <Ellipse Width="7" Height="7" Fill="#5599DD" Margin="4,0">
+                            <Ellipse.RenderTransform><TranslateTransform x:Name="Dot2"/></Ellipse.RenderTransform>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" BeginTime="0:0:0.15">
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Dot2" Storyboard.TargetProperty="Y">
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.0" Value="0"/>
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="-8"/>
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="0"/>
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.9" Value="0"/>
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <Ellipse Width="7" Height="7" Fill="#66AAEE" Margin="4,0">
+                            <Ellipse.RenderTransform><TranslateTransform x:Name="Dot3"/></Ellipse.RenderTransform>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" BeginTime="0:0:0.30">
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Dot3" Storyboard.TargetProperty="Y">
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.0" Value="0"/>
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="-8"/>
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="0"/>
+                                                <EasingDoubleKeyFrame KeyTime="0:0:0.9" Value="0"/>
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+        </Grid>
+
+    </Grid>
+</Window>

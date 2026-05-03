@@ -1,0 +1,75 @@
+Adress,Comment,Adress,Comment
+MW0,HMI.Auto PB,MW200,HMI.Lamp Auto PB
+MW1,HMI.Manual PB,MW201,HMI.Lamp Manual PB
+MW2,HMI.Reset PB,MW202,HMI.Lamp Reset PB
+MW3,HMI.Origin,MW203,HMI.Lamp Origin
+MW4,HMI.Start,MW204,HMI.Lamp Start
+MW5,HMI.Stop,MW205,HMI.Lamp Stop
+MW6,HMI.Pause System,MW206,HMI.Lamp Pause System
+MW7,HMI.Sigle Block mode,MW207,HMI.Lamp Sigle Block mode
+MW8,HMI.Next Step PB,MW208,HMI.Lamp Next Step PB
+MW9,HMI.Buzzer Off,MW209,HMI.Lamp Buzzer Off
+MW10,HMI.End Cycle,MW210,HMI.Lamp End Cycle
+MW11,HMI.Counter Reset PB,MW211,
+MW32,HMI.Cyl Infeed Up PB,MW232,HMI.Lamp Cyl Infeed Up PB
+MW33,HMI.Cyl Infeed Down PB,MW233,HMI.Lamp Cyl Infeed Down PB
+MW34,HMI.Vaccum Infeed ON PB,MW234,HMI.Lamp Vaccum Infeed ON PB
+MW35,HMI.Vaccum Infeed FF PB,MW235,HMI.Lamp Vaccum Infeed FF PB
+MW36,HMI.Cyl NG Up PB,MW236,HMI.Lamp Cyl NG Up PB
+MW37,HMI.Cyl NG Down PB,MW237,HMI.Lamp Cyl NG Down PB
+MW38,HMI.Vaccum Tranfer ON PB,MW238,HMI.Lamp Vaccum Tranfer ON PB
+MW39,HMI.Vaccum Tranfer OFF PB,MW239,HMI.Lamp Vaccum Tranfer OFF PB
+MW40,HMI.Cyl Outfeed Up PB,MW240,HMI.Lamp Cyl Outfeed Up PB
+MW41,HMI.Cyl Outfeed Down PB,MW241,HMI.Lamp Cyl Outfeed Down PB
+MW42,HMI.Vaccum OutFeed ON PB,MW242,HMI.Lamp Vaccum OutFeed ON PB
+MW43,HMI.Vaccum OutFeed OFF PB,MW243,HMI.Lamp Vaccum OutFeed OFF PB
+MW44,HMI.Cyl Pickup Tray Up PB,MW244,HMI.Lamp Cyl Pickup Tray Up PB
+MW45,HMI.Cyl Pickup Tray Down PB,MW245,HMI.Lamp Cyl Pickup Tray Down PB
+MW46,HMI.Vaccum Pickup Tray ON PB,MW246,HMI.Lamp Vaccum Pickup Tray ON PB
+MW47,HMI.Vaccum Pickup Tray OFF PB,MW247,HMI.Lamp Vaccum Pickup Tray OFF PB
+MW48,HMI.Vaccum Inspect 1 ON PB,MW248,HMI.Lamp Vaccum Inspect 1 ON PB
+MW49,HMI.Vaccum Inspect 1 OFF PB,MW249,HMI.Lamp Vaccum Inspect 1 OFF PB
+MW50,HMI.Vaccum Inspect 2 ON PB,MW250,HMI.Lamp Vaccum Inspect 2 ON PB
+MW51,HMI.Vaccum Inspect 2 OFF PB,MW251,HMI.Lamp Vaccum Inspect 2 OFF PB
+MW52,HMI.NG CV ON PB,MW252,HMI.Lamp NG CV ON PB
+MW53,HMI.NG CV OFF PB,MW253,HMI.Lamp NG CV OFF PB
+MW54,HMI.Camera 1 Trigger ON PB,MW254,HMI.Lamp Camera 1 Trigger ON PB
+MW55,HMI.Camera 1 Trigger OFF PB,MW255,HMI.Lamp Camera 1 Trigger OFF PB
+MW56,HMI.Camera 2 Trigger ON PB,MW256,HMI.Lamp Camera 2 Trigger ON PB
+MW57,HMI.Camera 2 Trigger OFF PB,MW257,HMI.Lamp Camera 2 Trigger OFF PB
+MW58,HMI.Camera 3 Trigger ON PB,MW258,HMI.Lamp Camera 3 Trigger ON PB
+MW59,HMI.Camera 3 Trigger OFF PB,MW259,HMI.Lamp Camera 3 Trigger OFF PB
+MW80,HMI.PCB Infeed Move to Idle PB,MW280,HMI.Lamp PCB Infeed Move to Idle PB
+MW81,HMI.PCB Infeed Move to Pickup PB,MW281,HMI.Lamp PCB Infeed Move to Pickup PB
+MW82,HMI.PCB Infeed Move to Place PB,MW282,HMI.Lamp PCB Infeed Move to Place PB
+MW90,HMI.PCB Tranfer Move to Idle PB,MW290,HMI.Lamp PCB Tranfer Move to Idle PB
+MW91,HMI.PCB Tranfer Move to Pickup PB,MW291,HMI.Lamp PCB Tranfer Move to Pickup PB
+MW92,HMI.PCB Tranfer Move to Prepare Pickup PB,MW292,HMI.Lamp PCB Tranfer Move to Prepare Pickup PB
+MW93,HMI.PCB Tranfer Move to Prepare Place PB,MW293,HMI.Lamp PCB Tranfer Move to Prepare Place PB
+MW94,HMI.PCB Tranfer Move to Place PB,MW294,HMI.Lamp PCB Tranfer Move to Place PB
+MW95,HMI.PCB Tranfer Move to NG PB,MW295,HMI.Lamp PCB Tranfer Move to NG PB
+MW100,HMI.PCB Outfeed Move to Idle PB,MW300,HMI.Lamp PCB Outfeed Move to Idle PB
+MW101,HMI.PCB Outfeed Move to Pickup PB,MW301,HMI.Lamp PCB Outfeed Move to Pickup PB
+MW102,HMI.PCB Outfeed Move to OK1 PB,MW302,HMI.Lamp PCB Outfeed Move to OK1 PB
+MW103,HMI.PCB Outfeed Move to OK2 PB,MW303,HMI.Lamp PCB Outfeed Move to OK2 PB
+MW104,HMI.PCB Outfeed Move to OK3 PB,MW304,HMI.Lamp PCB Outfeed Move to OK3 PB
+MW105,HMI.PCB Outfeed Move to OK4 PB,MW305,HMI.Lamp PCB Outfeed Move to OK4 PB
+MW106,HMI.PCB Outfeed Move to OK5 PB,MW306,HMI.Lamp PCB Outfeed Move to OK5 PB
+MW107,HMI.PCB Outfeed Move to OK6 PB,MW307,HMI.Lamp PCB Outfeed Move to OK6 PB
+MW108,HMI.PCB Outfeed Move to NG PB,MW308,HMI.Lamp PCB Outfeed Move to NG PB
+MW109,HMI.PCB Outfeed Move to Tray Pickup PB,MW309,HMI.Lamp PCB Outfeed Move to Tray Pickup PB
+MW110,HMI.PCB Outfeed Move to Tray Place PB,MW310,HMI.Lamp PCB Outfeed Move to Tray Place PB
+MW111,HMI.PCB Outfeed Move to Home X Axis PB,MW311,HMI.Lamp PCB Outfeed Move to Home X Axis PB
+MW112,HMI.PCB Outfeed New Tray PB,MW312,HMI.Lamp PCB Outfeed New Tray PB
+MW120,HMI.PCB Inspect 1 Move to Idle PB,MW320,HMI.Lamp PCB Inspect 1 Move to Idle PB
+MW121,HMI.PCB Inspect 1 Focus Position 1 PB,MW321,HMI.Lamp PCB Inspect 1 Focus Position 1 PB
+MW122,HMI.PCB Inspect 1 Focus Position 2 PB,MW322,HMI.Lamp PCB Inspect 1 Focus Position 2 PB
+MW123,HMI.PCB Inspect 1 Focus Position 3 PB,MW323,HMI.Lamp PCB Inspect 1 Focus Position 3 PB
+MW124,HMI.PCB Inspect 1 Start Inspect PB,MW324,HMI.Lamp PCB Inspect 1 Start Inspect PB
+MW125,HMI.PCB Inspect 1 Stop Sequence PB,MW325,HMI.Lamp PCB Inspect 1 Stop Sequence PB
+MW130,HMI.PCB Inspect 2 Move to Idle PB,MW330,HMI.Lamp PCB Inspect 2 Move to Idle PB
+MW131,HMI.PCB Inspect 2 Focus Position 1 PB,MW331,HMI.Lamp PCB Inspect 2 Focus Position 1 PB
+MW132,HMI.PCB Inspect 2 Focus Position 2 PB,MW332,HMI.Lamp PCB Inspect 2 Focus Position 2 PB
+MW133,HMI.PCB Inspect 2 Focus Position 3 PB,MW333,HMI.Lamp PCB Inspect 2 Focus Position 3 PB
+MW134,HMI.PCB Inspect 2 Start Inspect PB,MW334,HMI.Lamp PCB Inspect 2 Start Inspect PB
+MW135,HMI.PCB Inspect 2 Stop Sequence PB,MW335,HMI.Lamp PCB Inspect 2 Stop Sequence PB

@@ -1,0 +1,427 @@
+<Window x:Class="HaengSungAOI_WPF.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HaengSungAOI_WPF"
+        xmlns:vm="clr-namespace:VMControls.WPF.Release;assembly=VMControls.WPF.Release"
+        mc:Ignorable="d"
+        Title="Inspection History" Height="900" Width="1400" WindowStartupLocation="CenterOwner"
+        Background="#1e1e2f" ResizeMode="CanResize">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <!-- Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Filter Controls -->
+            <RowDefinition Height="*"/>
+            <!-- Content -->
+            <RowDefinition Height="60"/>
+            <!-- Footer buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2d2d3c" Padding="20,0">
+            <DockPanel>
+                <TextBlock Text="Inspection History &amp; Results" FontSize="20" Foreground="White" 
+                           FontWeight="Bold" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                
+                <!-- Statistics Display -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Right" Margin="0,0,20,0">
+                    <Border Background="#232336" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3" Margin="5,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Total: " Foreground="LightGray" FontSize="12"/>
+                            <TextBlock x:Name="TotalCountTextBlock" Text="0" Foreground="#87CEEB" FontSize="12" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#0A5A0A" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3" Margin="5,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="PASS: " Foreground="White" FontSize="12"/>
+                            <TextBlock x:Name="PassCountTextBlock" Text="0" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#8B0000" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3" Margin="5,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="FAIL: " Foreground="White" FontSize="12"/>
+                            <TextBlock x:Name="FailCountTextBlock" Text="0" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#4169E1" BorderBrush="#444" BorderThickness="1" Padding="8,4" CornerRadius="3" Margin="5,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Rate: " Foreground="White" FontSize="12"/>
+                            <TextBlock x:Name="PassRateTextBlock" Text="0%" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Button Content="X" Width="30" Height="30" FontSize="18" FontWeight="Bold"
+                        Background="Transparent" Foreground="White" BorderBrush="Transparent"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Close_Click" DockPanel.Dock="Right"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Filter Controls -->
+        <Border Grid.Row="1" Background="#232336" Padding="15,10" BorderBrush="#444" BorderThickness="0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="From:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <DatePicker x:Name="FromDatePicker" Width="120" Height="25" 
+                                Background="#2d2d3c" Foreground="Black" BorderBrush="#444"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="To:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <DatePicker x:Name="ToDatePicker" Width="120" Height="25" 
+                                Background="#2d2d3c" Foreground="Black" BorderBrush="#444"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="Result:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <ComboBox x:Name="ResultFilterComboBox" Width="80" Height="25" 
+                              Background="#2d2d3c" Foreground="Black" BorderBrush="#444">
+                        <ComboBoxItem Content="All" IsSelected="True"/>
+                        <ComboBoxItem Content="PASS"/>
+                        <ComboBoxItem Content="FAIL"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="Model:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <ComboBox x:Name="ModelFilterComboBox" Width="120" Height="25" 
+                              Background="#2d2d3c" Foreground="Black" BorderBrush="#444"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="PCB Code:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBox x:Name="PCBCodeFilterTextBox" Width="100" Height="25" 
+                             Background="#2d2d3c" Foreground="White" BorderBrush="#444"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="Records:" Foreground="LightGray" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <ComboBox x:Name="RecordLimitComboBox" Width="80" Height="25" 
+                              Background="#2d2d3c" Foreground="Black" BorderBrush="#444">
+                        <ComboBoxItem Content="100"/>
+                        <ComboBoxItem Content="500" IsSelected="True"/>
+                        <ComboBoxItem Content="1000"/>
+                        <ComboBoxItem Content="5000"/>
+                        <ComboBoxItem Content="All"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Grid.Column="7" Orientation="Horizontal">
+                    <Button Content="Search" Width="80" Height="30" Margin="5,0"
+                            Background="#4169E1" Foreground="White" FontWeight="Bold" 
+                            BorderBrush="#444" BorderThickness="1" Click="Search_Click"/>
+                    <Button Content="Clear" Width="60" Height="30" Margin="5,0"
+                            Background="#232336" Foreground="White" FontWeight="Bold" 
+                            BorderBrush="#444" BorderThickness="1" Click="Clear_Click"/>
+                    <Button Content="Export" Width="60" Height="30" Margin="5,0"
+                            Background="#0A5A0A" Foreground="White" FontWeight="Bold" 
+                            BorderBrush="#444" BorderThickness="1" Click="Export_Click"/>
+                    <Button Content="Delete Old" Width="80" Height="30" Margin="5,0"
+                            Background="#8B0000" Foreground="White" FontWeight="Bold" 
+                            BorderBrush="#444" BorderThickness="1" Click="DeleteOld_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content Area -->
+        <Grid Grid.Row="2" Background="#232336" Margin="0,5,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <!-- Inspection Results List -->
+                <ColumnDefinition Width="5"/>
+                <!-- Splitter -->
+                <ColumnDefinition Width="1*"/>
+                <!-- Image and Details -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Inspection Results DataGrid -->
+            <Border Grid.Column="0" Background="#202030" Margin="5" BorderBrush="#444" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Inspection Results" Foreground="White" FontWeight="Bold" FontSize="14" 
+                               Margin="10,5" Background="#2d2d3c" Padding="5"/>
+
+                    <DataGrid Grid.Row="1" x:Name="InspectionResultsDataGrid" Margin="5"
+                              AutoGenerateColumns="False" HeadersVisibility="Column"
+                              RowBackground="#2e2e3e" AlternatingRowBackground="#383850"
+                              Foreground="White" Background="#202030" BorderBrush="#444"
+                              FontSize="12" CanUserAddRows="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionChanged="InspectionResultsDataGrid_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="STT" Binding="{Binding STT}" Width="50"/>
+                            <DataGridTextColumn Header="PCB Code" Binding="{Binding PCBCode}" Width="120"/>
+                            <DataGridTextColumn Header="Model" Binding="{Binding ModelName}" Width="100"/>
+                            <DataGridTextColumn Header="Date/Time" Binding="{Binding InspectionDateTimeString}" Width="130"/>
+                            <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="60">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <Trigger Property="Text" Value="PASS">
+                                                <Setter Property="Foreground" Value="LightGreen"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                            </Trigger>
+                                            <Trigger Property="Text" Value="FAIL">
+                                                <Setter Property="Foreground" Value="LightCoral"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Defects" Binding="{Binding TotalDefects}" Width="60"/>
+                            <DataGridTextColumn Header="Time" Binding="{Binding InspectionTimeString}" Width="70"/>
+                            <DataGridTextColumn Header="Operator" Binding="{Binding OperatorName}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="5" Background="#444" HorizontalAlignment="Stretch"/>
+
+            <!-- Image and Details Panel -->
+            <Grid Grid.Column="2" Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*"/>
+                    <!-- Image Thumbnails -->
+                    <RowDefinition Height="5"/>
+                    <!-- Splitter -->
+                    <RowDefinition Height="1.5*"/>
+                    <!-- Selected Image Display -->
+                    <RowDefinition Height="0"/>
+                    <!-- Splitter -->
+                    <RowDefinition Height="0*"/>
+                    <!-- Defects List -->
+                </Grid.RowDefinitions>
+
+                <!-- Image Thumbnails -->
+                <Border Grid.Row="0" Background="#202030" BorderBrush="#444" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Inspection Images" Foreground="White" FontWeight="Bold" FontSize="14" 
+                                   Margin="10,5" Background="#2d2d3c" Padding="5"/>
+
+                        <Grid Grid.Row="1" Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Thumbnail 1 -->
+                            <Border Grid.Row="0" Grid.Column="0" BorderBrush="#666" BorderThickness="1" Margin="2"
+                                    Background="#2e2e3e">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Inspect 1" Foreground="White" FontSize="10" 
+                                               HorizontalAlignment="Center" Margin="2"/>
+                                    <Button Grid.Row="1" x:Name="Thumbnail1Button" Background="Transparent" 
+                                            BorderBrush="Transparent" Padding="0" Click="Thumbnail_Click" Tag="1">
+                                        <Image x:Name="Thumbnail1Image" Stretch="Uniform" MaxHeight="80"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Thumbnail 2 -->
+                            <Border Grid.Row="0" Grid.Column="1" BorderBrush="#666" BorderThickness="1" Margin="2"
+                                    Background="#2e2e3e">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Inspect 2" Foreground="White" FontSize="10" 
+                                               HorizontalAlignment="Center" Margin="2"/>
+                                    <Button Grid.Row="1" x:Name="Thumbnail2Button" Background="Transparent" 
+                                            BorderBrush="Transparent" Padding="0" Click="Thumbnail_Click" Tag="2">
+                                        <Image x:Name="Thumbnail2Image" Stretch="Uniform" MaxHeight="80"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Thumbnail 3 -->
+                            <Border Grid.Row="0" Grid.Column="2" BorderBrush="#666" BorderThickness="1" Margin="2"
+                                    Background="#2e2e3e">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Inspect 3" Foreground="White" FontSize="10" 
+                                               HorizontalAlignment="Center" Margin="2"/>
+                                    <Button Grid.Row="1" x:Name="Thumbnail3Button" Background="Transparent" 
+                                            BorderBrush="Transparent" Padding="0" Click="Thumbnail_Click" Tag="3">
+                                        <Image x:Name="Thumbnail3Image" Stretch="Uniform" MaxHeight="80"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Thumbnail 4 -->
+                            <Border Grid.Row="1" Grid.Column="0" BorderBrush="#666" BorderThickness="1" Margin="2"
+                                    Background="#2e2e3e">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Inspect 4" Foreground="White" FontSize="10" 
+                                               HorizontalAlignment="Center" Margin="2"/>
+                                    <Button Grid.Row="1" x:Name="Thumbnail4Button" Background="Transparent" 
+                                            BorderBrush="Transparent" Padding="0" Click="Thumbnail_Click" Tag="4">
+                                        <Image x:Name="Thumbnail4Image" Stretch="Uniform" MaxHeight="80"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Thumbnail 5 -->
+                            <Border Grid.Row="1" Grid.Column="1" BorderBrush="#666" BorderThickness="1" Margin="2"
+                                    Background="#2e2e3e">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Inspect 5" Foreground="White" FontSize="10" 
+                                               HorizontalAlignment="Center" Margin="2"/>
+                                    <Button Grid.Row="1" x:Name="Thumbnail5Button" Background="Transparent" 
+                                            BorderBrush="Transparent" Padding="0" Click="Thumbnail_Click" Tag="5">
+                                        <Image x:Name="Thumbnail5Image" Stretch="Uniform" MaxHeight="80"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Thumbnail 6 -->
+                            <Border Grid.Row="1" Grid.Column="2" BorderBrush="#666" BorderThickness="1" Margin="2"
+                                    Background="#2e2e3e">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Inspect 6" Foreground="White" FontSize="10" 
+                                               HorizontalAlignment="Center" Margin="2"/>
+                                    <Button Grid.Row="1" x:Name="Thumbnail6Button" Background="Transparent" 
+                                            BorderBrush="Transparent" Padding="0" Click="Thumbnail_Click" Tag="6">
+                                        <Image x:Name="Thumbnail6Image" Stretch="Uniform" MaxHeight="80"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Splitter -->
+                <GridSplitter Grid.Row="1" Height="5" Background="#444" HorizontalAlignment="Stretch"/>
+
+                <!-- Selected Image Display -->
+                <Border Grid.Row="2" Background="#202030" BorderBrush="#444" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" x:Name="SelectedImageTitle" Text="Selected Image" Foreground="White" FontWeight="Bold" FontSize="14" 
+                                   Margin="10,5" Background="#2d2d3c" Padding="5"/>
+
+                        <Viewbox Grid.Row="1" Stretch="Uniform" Margin="5">
+                            <Image x:Name="SelectedImage" Stretch="Uniform"/>
+                        </Viewbox>
+                        <!--<vm:VmRenderControl Grid.Row="1" x:Name="renderControl"></vm:VmRenderControl>-->
+                        
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+                            <Button Content="View Full Size" Width="100" Height="25" Margin="2"
+                                    Background="#232336" Foreground="White" BorderBrush="#444"
+                                    Click="ViewFullSizeImage_Click"/>
+                            <Button Content="Save Image" Width="80" Height="25" Margin="2"
+                                    Background="#232336" Foreground="White" BorderBrush="#444"
+                                    Click="SaveImage_Click"/>
+                            <Button Content="Open Folder" Width="80" Height="25" Margin="2"
+                                    Background="#232336" Foreground="White" BorderBrush="#444"
+                                    Click="OpenImageFolder_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Splitter -->
+                <GridSplitter Grid.Row="3" Height="5" Background="#444" HorizontalAlignment="Stretch"/>
+
+                <!-- Defects List -->
+                <Border Grid.Row="4" Background="#202030" BorderBrush="#444" BorderThickness="1">
+                    <Grid Margin="0,9,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Defect Details" Foreground="White" FontWeight="Bold" FontSize="14" 
+                                   Margin="10,5" Background="#2d2d3c" Padding="5"/>
+
+                        <DataGrid Grid.Row="1" x:Name="DefectsDataGrid" Margin="5"
+                                  AutoGenerateColumns="False" HeadersVisibility="Column"
+                                  RowBackground="#2e2e3e" AlternatingRowBackground="#383850"
+                                  Foreground="White" Background="#202030" BorderBrush="#444"
+                                  FontSize="10" CanUserAddRows="False" IsReadOnly="True"
+                                  SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Camera" Binding="{Binding Camera}" Width="60"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding ErrorType}" Width="80"/>
+                                <DataGridTextColumn Header="Position" Binding="{Binding Coordinates}" Width="80"/>
+                                <DataGridTextColumn Header="Confidence" Binding="{Binding ConfidenceString}" Width="70"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Footer Buttons -->
+        <Border Grid.Row="3" Background="#2d2d3c" Padding="20,10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Generate Report" Width="120" Height="35" Margin="0,0,10,0"
+                        Background="#9932CC" Foreground="White" FontWeight="Bold" 
+                        BorderBrush="#444" BorderThickness="1" Click="GenerateReport_Click"/>
+                <Button Content="Refresh" Width="80" Height="35" Margin="0,0,10,0"
+                        Background="#232336" Foreground="White" FontWeight="Bold" 
+                        BorderBrush="#444" BorderThickness="1" Click="Refresh_Click"/>
+                <Button Content="Close" Width="80" Height="35"
+                        Background="#232336" Foreground="White" FontWeight="Bold" 
+                        BorderBrush="#444" BorderThickness="1" Click="Close_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
