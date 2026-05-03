@@ -1,6 +1,5 @@
 using FrontendUI.WPF;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Services.Vision;

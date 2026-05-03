@@ -3,7 +3,6 @@ using System.Windows;
 using HaengSungAOI_WPF.Machine;
 using System.Linq;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
 
 namespace HaengSungAOI_WPF
 {

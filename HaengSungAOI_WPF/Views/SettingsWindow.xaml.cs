@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
 using HaengSungAOI_WPF.Utils;
 
 namespace HaengSungAOI_WPF

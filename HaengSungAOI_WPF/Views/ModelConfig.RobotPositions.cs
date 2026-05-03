@@ -5,7 +5,6 @@ using HaengSungAOI_WPF.ViewModels;
 using HaengSungAOI_WPF.Models;
 using System.Linq;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.Windows.Controls;

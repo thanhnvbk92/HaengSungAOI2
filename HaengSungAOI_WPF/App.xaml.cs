@@ -1,121 +1,169 @@
-﻿using System;
-using System.Configuration;
-using System.Data;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using HaengSungAOI_WPF.Services;
+using HaengSungAOI_WPF.Services.Machine;
+using HaengSungAOI_WPF.Services.Vision;
+using HaengSungAOI_WPF.Services.UI;
+using HaengSungAOI_WPF.ViewModels;
+using HaengSungAOI_WPF.Services.Database;
+using System.Configuration;
 
 namespace HaengSungAOI_WPF
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
-        public static int? ActualMachineId { get; private set; }
-        public static string Machine_Name { get; private set; }
-        public static System.Collections.Generic.Dictionary<string, int> ErrorDict { get; private set; }
+        private readonly IHost _host;
+        public IServiceProvider ServiceProvider => _host.Services;
+        
+        public static IMachineService MachineService => ((App)Current).ServiceProvider.GetService<IMachineService>();
+        public static IPlcService PlcService => ((App)Current).ServiceProvider.GetService<IPlcService>();
+        public static AutoVisionDbService DatabaseService => ((App)Current).ServiceProvider.GetService<AutoVisionDbService>();
+        public static IGlobalStateService GlobalState => ((App)Current).ServiceProvider.GetService<IGlobalStateService>();
 
-        /// <summary>
-        /// true = máy đang ở Auto mode (sau khi nhấn HMI_Start, trước khi nhấn HMI_Stop).
-        /// Được set bởi MainWindow khi nhấn HMI_Auto_PB / HMI_Manual_PB.
-        /// </summary>
-        public static bool IsAutoMode { get; set; } = false;
+        // Legacy static properties for Machine/Services access
+        public static int? ActualMachineId { get; set; }
+        public static Dictionary<string, int> ErrorDict { get; set; } = new Dictionary<string, int>();
 
-        protected override void OnStartup(StartupEventArgs e)
+        public App()
         {
-            // Lấy Machine ID và Error Dictionary từ CSDL ngay khi khởi động
-            try
-            {
-                Machine_Name = ConfigurationManager.AppSettings["Machine_Name"];
-                Task.Run(async () =>
-                {
-                    var dbService = new HaengSungAOI_WPF.Services.Database.AutoVisionDbService();
-                    if (!string.IsNullOrEmpty(Machine_Name))
-                    {
-                        ActualMachineId = await dbService.GetActualMachineIdAsync(Machine_Name);
-                    }
-                    ErrorDict = await dbService.LoadErrorDictionaryAsync();
-                }).Wait();
-            }
-            catch
-            {
-                // Bỏ qua lỗi kết nối DB khi khởi động
-            }
-
-            int num = 0;
-            try
-            {
-                Process[] processes = Process.GetProcesses();
-                for (int i = 0; i < processes.Length; i++)
-                {
-                    try
-                    {
-                        if (processes[i].ProcessName.IndexOf("HaengSungAOI", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            num++;
-                        }
-                    }
-                    catch
-                    {
-                        // ignore processes we can't inspect
-                    }
-                }
-            }
-            catch
-            {
-                // if process enumeration fails, allow startup to continue or handle as needed
-            }
-
-            if (num > 1)
+            // Kiểm tra Single Instance sớm nhất có thể
+            if (!IsSingleInstance())
             {
                 MessageBox.Show("Chương trình đã chạy...", "Thông báo");
-                Current.Shutdown();
+                Application.Current.Shutdown();
                 return;
             }
 
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    ConfigureServices(services);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.AddDebug();
+                    logging.AddConsole();
+                })
+                .Build();
+        }
+
+        private void ConfigureServices(IServiceCollection services)
+        {
+            // Core Services
+            services.AddSingleton<IGlobalStateService, GlobalStateService>();
+            services.AddSingleton<AutoVisionDbService>();
+            services.AddSingleton<IErrorService, ErrorService>();
+
+            // Machine & Hardware Services
+            services.AddSingleton<IPlcService, PlcService>();
+            services.AddSingleton<IVisionService, VisionService>();
+            services.AddSingleton<IScanOutService, ScanOutService>();
+            services.AddSingleton<IImageDisplayService, ImageDisplayService>();
+            services.AddSingleton<IHmiService, HmiService>();
+            services.AddSingleton<IMachineService, MachineService>();
+
+            // ViewModels
+            services.AddSingleton<HmiViewModel>();
+            services.AddSingleton<MainViewModel>();
+
+            // Windows
+            services.AddSingleton<MainWindow>();
+        }
+
+        protected override async void OnStartup(StartupEventArgs e)
+        {
+            if (_host == null) return;
+
+            await _host.StartAsync();
+
+            // Khởi tạo Global State từ DB (giữ nguyên logic cũ nhưng bóc tách)
+            await InitializeGlobalStateAsync();
+
+            // Thiết lập xử lý lỗi toàn cục
+            SetupExceptionHandling();
+
+            // Hiển thị Main Window
+            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+
             base.OnStartup(e);
-
-            // Bắt lỗi crash toàn cục
-            Current.DispatcherUnhandledException += App_DispatcherUnhandledException;
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
 
-        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        private async Task InitializeGlobalStateAsync()
         {
-            RecordMachineEndTimeOnCrash();
+            try
+            {
+                var globalState = _host.Services.GetRequiredService<IGlobalStateService>();
+                var dbService = _host.Services.GetRequiredService<AutoVisionDbService>();
+                
+                globalState.MachineName = ConfigurationManager.AppSettings["Machine_Name"];
+                
+                if (!string.IsNullOrEmpty(globalState.MachineName))
+                {
+                    globalState.ActualMachineId = await dbService.GetActualMachineIdAsync(globalState.MachineName);
+                    App.ActualMachineId = globalState.ActualMachineId; // Sync to legacy static
+                }
+                globalState.ErrorDict = await dbService.LoadErrorDictionaryAsync();
+                App.ErrorDict = globalState.ErrorDict; // Sync to legacy static
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing global state: {ex.Message}");
+                // Bỏ qua lỗi kết nối DB khi khởi động như logic cũ
+            }
         }
 
-        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private void SetupExceptionHandling()
         {
-            RecordMachineEndTimeOnCrash();
+            this.DispatcherUnhandledException += (s, e) =>
+            {
+                RecordMachineEndTimeOnCrash();
+                // e.Handled = true; // Có thể set true nếu muốn ngăn app crash
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                RecordMachineEndTimeOnCrash();
+            };
         }
 
         private void RecordMachineEndTimeOnCrash()
         {
             try
             {
-                if (ActualMachineId.HasValue)
+                var globalState = _host.Services.GetRequiredService<IGlobalStateService>();
+                if (globalState.ActualMachineId.HasValue)
                 {
-                    Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var dbService = new HaengSungAOI_WPF.Services.Database.AutoVisionDbService();
-                            await dbService.UpdateVisionOperatingEndAsync(ActualMachineId.Value);
-                        }
-                        catch
-                        {
-                            // Bỏ qua lỗi trong quá trình crash
-                        }
-                    }).Wait(2000); // Đợi tối đa 2s để ghi nhận kịp trước khi crash
+                    var dbService = _host.Services.GetRequiredService<AutoVisionDbService>();
+                    // Chạy đồng bộ vì app đang crash
+                    Task.Run(async () => await dbService.UpdateVisionOperatingEndAsync(globalState.ActualMachineId.Value)).Wait(2000);
                 }
             }
-            catch
+            catch { }
+        }
+
+        private bool IsSingleInstance()
+        {
+            string currentProcessName = Process.GetCurrentProcess().ProcessName;
+            int count = Process.GetProcessesByName(currentProcessName).Length;
+            return count <= 1;
+        }
+
+        protected override async void OnExit(ExitEventArgs e)
+        {
+            if (_host != null)
             {
-                // Bỏ qua lỗi trong quá trình crash
+                await _host.StopAsync();
+                _host.Dispose();
             }
+            base.OnExit(e);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
+using HaengSungAOI_WPF.Machine.PLC;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Services.Vision;
@@ -18,6 +17,7 @@ using System.Linq.Expressions;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1705,14 +1705,19 @@ namespace HaengSungAOI_WPF.Machine
                     }
                     else
                     {
-                        // Thêm thành công => báo cho giao diện (MainWindow) cập nhật History DataGrid
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        // Thêm thành công => báo cho giao diện (MainViewModel) cập nhật History
+                        var uiResult = new InspectionResult
                         {
-                            if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
-                            {
-                                mainWindow.AddVisionResultToHistory(resultData);
-                            }
-                        });
+                            PCBCode = resultData.Pid,
+                            ModelName = CurrentModel?.ModelName,
+                            InspectionDateTime = resultData.InspectionTime ?? DateTime.Now,
+                            Result = resultData.Result,
+                            Station = resultData.Station,
+                            Note = resultData.Note,
+                            InspectionTime = resultData.TackTime ?? 0,
+                            ImagePath = resultData.ImagePath
+                        };
+                        WeakReferenceMessenger.Default.Send(uiResult);
                     }
                 }
                 catch (Exception ex)

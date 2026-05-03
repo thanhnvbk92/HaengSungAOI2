@@ -8,7 +8,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using HaengSungAOI_WPF.Machine;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Utils;
 

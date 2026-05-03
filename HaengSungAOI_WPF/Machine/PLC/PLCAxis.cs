@@ -2,9 +2,8 @@ using System;
 using System.Text;
 using System.Timers;
 using HaengSungAOI_WPF.Utils;
-using HaengSungAOI_WPF.Machine.PLC;
 
-namespace HaengSungAOI_WPF.Machine.PLC.PLC
+namespace HaengSungAOI_WPF.Machine.PLC
 {
     /// <summary>
     /// PLC-Based Axis Control - Replacement for EtherCAT-based Axis

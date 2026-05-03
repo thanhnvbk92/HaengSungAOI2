@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Timers;
-using HaengSungAOI_WPF.Machine.PLC;
 
-namespace HaengSungAOI_WPF.Machine.PLC.PLC
+namespace HaengSungAOI_WPF.Machine.PLC
 {
     /// <summary>
     /// Defines the servo axes available in the system based on Servo para.csv

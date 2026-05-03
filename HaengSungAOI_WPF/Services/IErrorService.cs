@@ -1,0 +1,16 @@
+using System;
+
+namespace HaengSungAOI_WPF.Services
+{
+    public interface IErrorService
+    {
+        int TotalErrorCount { get; }
+        int UnacknowledgedErrorCount { get; }
+        int CriticalErrorCount { get; }
+        bool HasAlarms { get; }
+        
+        event Action ErrorsChanged;
+        
+        void AcknowledgeAll();
+    }
+}

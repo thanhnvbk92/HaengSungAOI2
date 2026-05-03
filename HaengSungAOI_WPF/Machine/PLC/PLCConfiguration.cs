@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using HaengSungAOI_WPF.Utils;
-using HaengSungAOI_WPF.Machine.PLC;
 
-namespace HaengSungAOI_WPF.Machine.PLC.PLC
+namespace HaengSungAOI_WPF.Machine.PLC
 {
     public static class PLCConfiguration
     {

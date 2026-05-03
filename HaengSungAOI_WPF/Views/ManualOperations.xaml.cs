@@ -10,7 +10,6 @@ using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Services.Vision;
 using HaengSungAOI_WPF.Machine;
 using HaengSungAOI_WPF.Utils;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
 
 namespace HaengSungAOI_WPF
 {

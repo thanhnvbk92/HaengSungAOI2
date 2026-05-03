@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -181,6 +181,11 @@ namespace HaengSungAOI_WPF.Models
         // Database metadata
         public int Id { get; set; }
         public string Name { get; set; } = "";
+        public string ModelName 
+        { 
+            get => Name; 
+            set => Name = value; 
+        }
         public string Description { get; set; } = "";
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime ModifiedDate { get; set; } = DateTime.Now;

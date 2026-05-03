@@ -6,9 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentModbus;
 using HaengSungAOI_WPF.Utils;
-using HaengSungAOI_WPF.Machine.PLC;
 
-namespace HaengSungAOI_WPF.Machine.PLC.PLC
+namespace HaengSungAOI_WPF.Machine.PLC
 {
     /// <summary>
     /// PLC data type for different Modbus functions
