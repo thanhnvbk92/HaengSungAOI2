@@ -1193,3 +1193,5 @@ namespace HaengSungAOI_WPF.Models
         public string AverageInspectionTimeString => $"{AverageInspectionTime:F2}s";
     }
 }
+
+

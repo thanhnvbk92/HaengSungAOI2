@@ -51,3 +51,5 @@ namespace HaengSungAOI_WPF.Models
         public float DecTime { get; set; }
     }
 }
+
+

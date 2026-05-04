@@ -12,3 +12,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         float GetAxisPosition(string axisName);
     }
 }
+
+
+

@@ -1,5 +1,5 @@
 using System;
-using HaengSungAOI_WPF.Machine;
+using HaengSungAOI_WPF.Core;
 
 namespace HaengSungAOI_WPF.Services
 {
@@ -47,3 +47,6 @@ namespace HaengSungAOI_WPF.Services
         }
     }
 }
+
+
+

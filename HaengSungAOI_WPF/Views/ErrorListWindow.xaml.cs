@@ -1,4 +1,4 @@
-using HaengSungAOI_WPF.Machine;
+using HaengSungAOI_WPF.Core;
 using HaengSungAOI_WPF.Services;
 using System;
 using System.Collections.Generic;
@@ -24,9 +24,9 @@ namespace HaengSungAOI_WPF.Views
 
         // Flag to prevent triggering events during initialization
         private bool _isInitializing = true;
-        Machine.Machine AOImachine;
+        Machine AOImachine;
 
-        public ErrorListWindow(Machine.Machine machine)
+        public ErrorListWindow(Machine machine)
         {
             InitializeComponent();
 
@@ -588,3 +588,5 @@ namespace HaengSungAOI_WPF.Views
         }
     }
 }
+
+

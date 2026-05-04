@@ -1,4 +1,4 @@
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core.PLC;
 using HaengSungAOI_WPF.Services.Machine;
 using System;
 using System.Collections.Generic;
@@ -108,3 +108,6 @@ namespace HaengSungAOI_WPF.Services.UI
         }
     }
 }
+
+
+

@@ -18,3 +18,6 @@ namespace HaengSungAOI_WPF.Models
         public Dictionary<string, ushort> RobotPositions { get; set; } = new Dictionary<string, ushort>();
     }
 }
+
+
+

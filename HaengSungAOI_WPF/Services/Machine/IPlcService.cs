@@ -101,6 +101,9 @@ namespace HaengSungAOI_WPF.Services.Machine
         /// Sets which groups of PLC tags should be actively monitored/polled.
         /// </summary>
         /// <param name="groups">Flags representing the groups to monitor.</param>
-        void SetActiveMonitoringGroups(HaengSungAOI_WPF.Machine.PLC.PLCMonitoringGroup groups);
+        void SetActiveMonitoringGroups(HaengSungAOI_WPF.Core.PLC.PLCMonitoringGroup groups);
     }
 }
+
+
+

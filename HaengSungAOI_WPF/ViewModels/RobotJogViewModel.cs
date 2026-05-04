@@ -9,7 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Services.Machine;
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core.PLC;
 
 namespace HaengSungAOI_WPF.ViewModels
 {
@@ -18,7 +18,7 @@ namespace HaengSungAOI_WPF.ViewModels
         private readonly IMachineService _machineService;
         private readonly IPlcService _plcService;
         private readonly IMachineHmiService _hmiService;
-        private readonly DispatcherTimer _monitorTimer;
+        private readonly IServoMonitorService _servoMonitor;
         private readonly Dictionary<string, bool> _buttonPressStates = new Dictionary<string, bool>();
 
         private readonly Dictionary<string, string> _tagMap = new Dictionary<string, string>();
@@ -230,7 +230,6 @@ namespace HaengSungAOI_WPF.ViewModels
             set => SetProperty(ref _visibilityJogX, value);
         }
 
-        private readonly ServoMonitor _servoMonitor;
 
         public IAsyncRelayCommand<string> ButtonDownCommand { get; }
         public IAsyncRelayCommand<string> ButtonUpCommand { get; }
@@ -240,11 +239,12 @@ namespace HaengSungAOI_WPF.ViewModels
         public IRelayCommand WriteAllSpeedsCommand { get; }
         public IRelayCommand EmergencyStopCommand { get; }
 
-        public RobotJogViewModel(IMachineService machineService, RobotType robotType)
+        public RobotJogViewModel(IMachineService machineService, IServoMonitorService servoMonitor, RobotType robotType)
         {
             _machineService = machineService;
             _plcService = machineService.PLC;
             _hmiService = machineService.HMI;
+            _servoMonitor = servoMonitor;
             RobotType = robotType;
 
             ButtonDownCommand = new AsyncRelayCommand<string>(ButtonDown);
@@ -257,22 +257,18 @@ namespace HaengSungAOI_WPF.ViewModels
 
             InitializeLayout();
 
-            // Initialize position monitoring via ServoMonitor
-            _servoMonitor = new ServoMonitor(_plcService, 200);
-            _servoMonitor.StartMonitoring();
+            // Subscribe to position monitoring via IServoMonitorService
+            if (_servoMonitor != null)
+            {
+                _servoMonitor.StartMonitoring();
+                _servoMonitor.StatusChanged += ServoMonitor_StatusChanged;
+            }
 
             // Subscribe to lamp changes from HMI service
             if (_hmiService != null)
             {
                 _hmiService.LampStateChanged += OnLampStateChanged;
             }
-
-            _monitorTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(200)
-            };
-            _monitorTimer.Tick += MonitorTimer_Tick;
-            _monitorTimer.Start();
 
             ReadAllSpeeds();
         }
@@ -411,16 +407,13 @@ namespace HaengSungAOI_WPF.ViewModels
             }
         }
 
-        private void MonitorTimer_Tick(object sender, EventArgs e)
+        private void ServoMonitor_StatusChanged(object sender, HaengSungAOI_WPF.Core.PLC.ServoStatusChangedEventArgs e)
         {
-            if (_plcService == null || !_plcService.IsConnected) return;
-
-            UpdateLampStates();
-            UpdateCurrentPositions();
-        }
-
-        private void UpdateLampStates()
-        {
+            // Update UI on UI Thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateCurrentPositions();
+            });
         }
 
         private void UpdateCurrentPositions()
@@ -607,17 +600,20 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void Dispose()
         {
-            _monitorTimer?.Stop();
-            
             if (_hmiService != null)
             {
                 _hmiService.LampStateChanged -= OnLampStateChanged;
             }
 
-            _servoMonitor?.StopMonitoring();
-            _servoMonitor?.Dispose();
+            if (_servoMonitor != null)
+            {
+                _servoMonitor.StatusChanged -= ServoMonitor_StatusChanged;
+            }
             
             ReleaseAllButtons();
         }
     }
 }
+
+
+

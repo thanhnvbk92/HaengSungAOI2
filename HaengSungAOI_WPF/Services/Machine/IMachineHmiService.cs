@@ -37,3 +37,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         int GetQuantity(string tagName);
     }
 }
+
+
+

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using HaengSungAOI_WPF.Services;
 
-namespace HaengSungAOI_WPF.Machine
+namespace HaengSungAOI_WPF.Core
 {
 
     /// <summary>
@@ -1196,3 +1196,5 @@ namespace HaengSungAOI_WPF.Machine
         }
     }
 }
+
+

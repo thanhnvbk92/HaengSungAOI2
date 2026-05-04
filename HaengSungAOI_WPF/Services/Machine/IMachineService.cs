@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using HaengSungAOI_WPF.Machine;
+using HaengSungAOI_WPF.Core;
 using HaengSungAOI_WPF.Models;
 
 namespace HaengSungAOI_WPF.Services.Machine
@@ -15,7 +15,7 @@ namespace HaengSungAOI_WPF.Services.Machine
 
         IPlcService PLC { get; }
         IMachineHmiService HMI { get; }
-        HaengSungAOI_WPF.Machine.Machine Machine { get; }
+        HaengSungAOI_WPF.Core.Machine Machine { get; }
         
         void Initialize();
         void Start();
@@ -33,3 +33,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         event Action<string> OnStatusMessageChanged;
     }
 }
+
+
+

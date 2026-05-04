@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using HaengSungAOI_WPF.Machine;
+using HaengSungAOI_WPF.Core;
 
 namespace HaengSungAOI_WPF.Services.Machine
 {
@@ -35,3 +35,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         event EventHandler<ScanOutReceivedEventArgs> DataReceived;
     }
 }
+
+
+

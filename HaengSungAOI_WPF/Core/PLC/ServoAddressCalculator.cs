@@ -5,8 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Timers;
 using HaengSungAOI_WPF.Services.Machine;
 
-
-namespace HaengSungAOI_WPF.Machine.PLC
+namespace HaengSungAOI_WPF.Core.PLC
 {
     /// <summary>
     /// Defines the servo axes available in the system based on Servo para.csv
@@ -484,7 +483,7 @@ Axis = axis;
     /// Monitors all servo axes continuously and provides status updates
     /// Integrates with IPlcService for data reading
     /// </summary>
-    public class ServoMonitor : IDisposable
+    public class ServoMonitor : IServoMonitorService, IDisposable
     {
         private readonly IPlcService _plcService;
         private readonly Dictionary<ServoAxis, ServoAxisStatus> _axisStatuses;
@@ -939,3 +938,5 @@ var sb = new System.Text.StringBuilder();
         }
   }
 }
+
+

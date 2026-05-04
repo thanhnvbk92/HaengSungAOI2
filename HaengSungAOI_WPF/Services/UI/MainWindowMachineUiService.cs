@@ -1,5 +1,5 @@
-using HaengSungAOI_WPF.Machine;
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core;
+using HaengSungAOI_WPF.Core.PLC;
 using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Utils;
@@ -18,7 +18,7 @@ namespace HaengSungAOI_WPF.Services.UI
         private static readonly SolidColorBrush BrushTrayGood = new SolidColorBrush(Color.FromRgb(0x87, 0xCE, 0xEB));
         private static readonly SolidColorBrush BrushNa = new SolidColorBrush(Colors.Gray);
 
-        public void UpdateTrayQuantities(MainViewModel vm, HaengSungAOI_WPF.Machine.Machine machine)
+        public void UpdateTrayQuantities(MainViewModel vm, HaengSungAOI_WPF.Core.Machine machine)
         {
             if (vm == null) return;
 
@@ -46,7 +46,7 @@ namespace HaengSungAOI_WPF.Services.UI
             vm.BlankTrayQuantityForeground = GetTrayColorBrush(blankTray, 2, 4);
         }
 
-        public async Task WritePcbTrayQuantityToPlcAsync(Window owner, HaengSungAOI_WPF.Machine.Machine machine, MachineErrorList errorList, ushort value)
+        public async Task WritePcbTrayQuantityToPlcAsync(Window owner, HaengSungAOI_WPF.Core.Machine machine, MachineErrorList errorList, ushort value)
         {
             try
             {
@@ -165,3 +165,6 @@ namespace HaengSungAOI_WPF.Services.UI
         }
     }
 }
+
+
+

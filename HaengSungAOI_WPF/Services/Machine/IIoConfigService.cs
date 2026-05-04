@@ -11,3 +11,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         bool TryGetAddress(string tagName, out ushort address);
     }
 }
+
+
+

@@ -1,16 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using VM.Core;
+using VMControls.WPF.Release;
+using VMControls.WPF.Release.Front;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Utils;
-using HaengSungAOI_WPF.Machine;
 
 namespace HaengSungAOI_WPF.Services.Vision
 {
-    public class VisionService : IVisionService
+    public class VisionService : IVisionService, IDisposable
     {
         private readonly ILogger<VisionService> _logger;
         private readonly IErrorService _errorService;
@@ -20,7 +23,13 @@ namespace HaengSungAOI_WPF.Services.Vision
 
         public bool IsSolutionLoaded => !string.IsNullOrEmpty(_currentSolutionPath);
         public string CurrentSolutionPath => _currentSolutionPath;
-        public object FrontendControl { get; set; }
+        
+        private VmFrontendControl _frontendControl;
+        public object FrontendControl 
+        { 
+            get => _frontendControl;
+            set => _frontendControl = value as VmFrontendControl;
+        }
 
         public event EventHandler<VisionProcedureCompletedEventArgs> ProcedureCompleted;
         public event EventHandler<string> SolutionLoaded;
@@ -44,6 +53,9 @@ namespace HaengSungAOI_WPF.Services.Vision
                         VmSolution.Load(path);
                         _currentSolutionPath = path;
                         InitializeProcedures();
+                        
+                        _frontendControl?.LoadFrontendSource();
+                        
                         SolutionLoaded?.Invoke(this, path);
                         _logger.LogInformation($"Vision solution loaded: {path}");
                     }
@@ -51,13 +63,13 @@ namespace HaengSungAOI_WPF.Services.Vision
                 else
                 {
                     _logger.LogWarning($"Vision solution file not found: {path}");
+                    _errorService.ReportError("Vision", $"Vision solution file not found: {path}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading vision solution: {path}. (Vision SDK environment might be missing)");
+                _logger.LogError(ex, $"Error loading vision solution: {path}");
                 _errorService.ReportError("Vision", $"Failed to load vision solution: {path}", ex);
-                // Do not re-throw to allow the application to continue running without vision hardware
             }
         }
 
@@ -88,18 +100,23 @@ namespace HaengSungAOI_WPF.Services.Vision
                 }
                 else
                 {
-                    _logger.LogWarning($"Procedure not found in solution: {name}");
+                    if (name == "Align")
+                    {
+                        _logger.LogWarning("Required procedure 'Align' not found in solution");
+                        _errorService.ReportError("Vision", "Procedure 'Align' không tồn tại trong cấu hình Vision Master.");
+                    }
+                    else
+                    {
+                        _logger.LogDebug($"Optional procedure '{name}' not found");
+                    }
                 }
             }
         }
 
         private void UnsubscribeFromAll()
         {
-            foreach (var proc in _procedures.Values)
-            {
-                // Note: We can't easily unsubscribe if we use anonymous lambdas, 
-                // but since we are loading a NEW solution, the old VmSolution instance is gone anyway.
-            }
+            // Note: In VMaster, when loading a new solution, previous subscriptions are generally cleared,
+            // but we clear our local dictionary to stay in sync.
             _procedures.Clear();
         }
 
@@ -124,7 +141,10 @@ namespace HaengSungAOI_WPF.Services.Vision
                             angle = proc.ModuResult.GetOutputFloat("R").pFloatVal[0];
                         }
                     }
-                    catch { /* Ignore if output pins missing */ }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Failed to extract results for {name}: {ex.Message}");
+                    }
                 }
 
                 _logger.LogInformation($"Procedure completed: {name}, Status: {status}, Result: {(isOk ? "OK" : "NG")}");
@@ -149,15 +169,40 @@ namespace HaengSungAOI_WPF.Services.Vision
             }
         }
 
+        public bool GetVisionStatus()
+        {
+            return IsSolutionLoaded && _procedures.ContainsKey("Align");
+        }
+
         public VmProcedure GetProcedure(string procedureName)
         {
             _procedures.TryGetValue(procedureName, out var proc);
             return proc;
         }
 
+        public void SaveImage(string procedureName, string pid, bool isOK, string message)
+        {
+            try
+            {
+                if (_procedures.TryGetValue(procedureName, out var proc))
+                {
+                    // Using dynamic to call SaveImage as the exact namespace/type 
+                    // might be in a separate assembly (SaveImageCs.dll) that's hard to reference directly here
+                    ((dynamic)proc).SaveImage(pid, isOK, message);
+                    _logger.LogDebug($"Image saved for {procedureName} (PID: {pid})");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to save image for {procedureName}: {ex.Message}");
+            }
+        }
         public void Dispose()
         {
             UnsubscribeFromAll();
         }
     }
 }
+
+
+

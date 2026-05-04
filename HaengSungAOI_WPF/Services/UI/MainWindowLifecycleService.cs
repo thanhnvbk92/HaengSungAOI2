@@ -1,5 +1,5 @@
-using HaengSungAOI_WPF.Machine;
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core;
+using HaengSungAOI_WPF.Core.PLC;
 using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Utils;
@@ -15,7 +15,7 @@ namespace HaengSungAOI_WPF.Services.UI
     public class MainWindowLifecycleService
     {
         public async Task InitializeMainWindowAsync(
-            HaengSungAOI_WPF.Machine.Machine machine,
+            HaengSungAOI_WPF.Core.Machine machine,
             VmFrontendControl frontendControl,
             Action populateHmiLampMapping,
             Action updateMachineControlButtons,
@@ -56,7 +56,7 @@ namespace HaengSungAOI_WPF.Services.UI
             }
         }
 
-        public void HandleWindowActivated(HaengSungAOI_WPF.Machine.Machine machine)
+        public void HandleWindowActivated(HaengSungAOI_WPF.Core.Machine machine)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace HaengSungAOI_WPF.Services.UI
             }
         }
 
-        public void HandleWindowKeyDown(Window window, KeyEventArgs e, HaengSungAOI_WPF.Machine.Machine machine, MachineErrorList errorList, Action updateMachineControlButtons)
+        public void HandleWindowKeyDown(Window window, KeyEventArgs e, HaengSungAOI_WPF.Core.Machine machine, MachineErrorList errorList, Action updateMachineControlButtons)
         {
             if (e.Key == Key.F11)
             {
@@ -96,30 +96,16 @@ namespace HaengSungAOI_WPF.Services.UI
         }
 
         public void CleanupOnClosing(
-            DispatcherTimer errorStatusTimer,
-            EventHandler updateErrorStatusDisplay,
-            DispatcherTimer trayQuantityTimer,
-            EventHandler updateTrayQuantities,
-            DispatcherTimer hmiLampUpdateTimer,
-            EventHandler updateHmiLamps,
             MachineErrorList errorList,
             EventHandler<MachineErrorEventArgs> onCriticalErrorAdded,
             EventHandler<MachineErrorEventArgs> onErrorAdded,
-            HaengSungAOI_WPF.Machine.Machine machine,
+            HaengSungAOI_WPF.Core.Machine machine,
             Action<bool> onMachineEnabledStateChanged,
             int? actualMachineId)
         {
             try
             {
                 Logger.Info("MainWindow", "MainWindow closing - cleaning up resources");
-
-                if (errorStatusTimer != null) errorStatusTimer.Tick -= updateErrorStatusDisplay;
-                if (trayQuantityTimer != null) trayQuantityTimer.Tick -= updateTrayQuantities;
-                if (hmiLampUpdateTimer != null) hmiLampUpdateTimer.Tick -= updateHmiLamps;
-
-                errorStatusTimer?.Stop();
-                trayQuantityTimer?.Stop();
-                hmiLampUpdateTimer?.Stop();
 
                 if (errorList != null)
                 {
@@ -175,3 +161,6 @@ namespace HaengSungAOI_WPF.Services.UI
         }
     }
 }
+
+
+

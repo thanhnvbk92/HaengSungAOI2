@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
-using HaengSungAOI_WPF.Machine;
+using HaengSungAOI_WPF.Core;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Services.Vision;
 using HaengSungAOI_WPF.Services.Database;
@@ -26,8 +26,8 @@ namespace HaengSungAOI_WPF.Services.Machine
         private readonly IMachineHmiService _hmiService;
         private readonly IErrorService _errorService;
 
-        private HaengSungAOI_WPF.Machine.Machine _machine;
-        public HaengSungAOI_WPF.Machine.Machine Machine => _machine;
+        private HaengSungAOI_WPF.Core.Machine _machine;
+        public HaengSungAOI_WPF.Core.Machine Machine => _machine;
         public IPlcService PLC => _plcService;
         public IMachineHmiService HMI => _hmiService;
 
@@ -84,27 +84,14 @@ namespace HaengSungAOI_WPF.Services.Machine
             _errorService = errorService;
 
             // Initialize Processors (ActionBlocks)
-            _visionProcessor = new ActionBlock<VisionTriggerEventArgs>(
-                async e => await ProcessVisionTriggerAsync(e),
-                new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1, EnsureOrdered = true }
-            );
-
             _scanOutResponseProcessor = new ActionBlock<ScanOutReceivedEventArgs>(
                 async e => await ProcessScanOutResponseAsync(e),
                 new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1, EnsureOrdered = true }
             );
 
-            _trayAndProductProcessor = new ActionBlock<PLCWorkItem>(
-                async item => await ProcessTrayAndProductAsync(item),
-                new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1, EnsureOrdered = true }
-            );
-
             // Subscribe to Service Events
-            _plcService.VisionTriggered += (s, e) => _visionProcessor.Post(e);
-            _plcService.TrayUpdated += (s, e) => _trayAndProductProcessor.Post(new PLCWorkItem { Type = PLCWorkType.TrayUpdate, TagName = e.TagName, NewValue = e.NewValue });
             _plcService.AlarmChanged += OnAlarmChanged;
             _scanOutService.DataReceived += (s, e) => _scanOutResponseProcessor.Post(e);
-            _visionService.ProcedureCompleted += OnVisionProcedureCompleted;
         }
 
         public void Initialize()
@@ -113,8 +100,8 @@ namespace HaengSungAOI_WPF.Services.Machine
             {
                 _logger.LogInformation("Initializing Machine Service...");
                 
-                // Initialize legacy Machine object
-                _machine = new HaengSungAOI_WPF.Machine.Machine(_plcService, _errorService);
+                // Initialize Core Machine object
+                _machine = new HaengSungAOI_WPF.Core.Machine(_plcService, _errorService, _visionService);
                 _machine.Initialize();
 
                 _visionService.FrontendControl = FrontendControl;
@@ -138,7 +125,6 @@ namespace HaengSungAOI_WPF.Services.Machine
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to initialize Machine Service");
-                // Do not re-throw to avoid application crash during initialization
             }
         }
 
@@ -147,6 +133,7 @@ namespace HaengSungAOI_WPF.Services.Machine
             _isRunning = true;
             _mode = MachineMode.Auto;
             _globalState.IsAutoMode = true;
+            _machine?.StartMachine();
             OnRunningStateChanged?.Invoke(true);
             _logger.LogInformation("Machine Started in Auto Mode");
         }
@@ -156,6 +143,7 @@ namespace HaengSungAOI_WPF.Services.Machine
             _isRunning = false;
             _mode = MachineMode.Manual;
             _globalState.IsAutoMode = false;
+            _machine?.StopMachine();
             OnRunningStateChanged?.Invoke(false);
             _logger.LogInformation("Machine Stopped");
         }
@@ -175,7 +163,8 @@ namespace HaengSungAOI_WPF.Services.Machine
 
         public void ClearQueues()
         {
-            _logger.LogInformation("WIP queues cleared (No-op in new architecture)");
+            _machine?.ClearQueues();
+            _logger.LogInformation("WIP queues cleared");
         }
 
         public void UpdateModel(PCBModel model)
@@ -184,36 +173,6 @@ namespace HaengSungAOI_WPF.Services.Machine
             _visionService.LoadSolutionForModel(model);
         }
 
-        private async Task ProcessVisionTriggerAsync(VisionTriggerEventArgs e)
-        {
-            try
-            {
-                _logger.LogInformation($"Processing Vision Trigger: {e.ProcedureName}");
-                
-
-                await _visionService.RunProcedureAsync(e.ProcedureName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error processing vision trigger: {e.ProcedureName}");
-            }
-        }
-
-        private void OnVisionProcedureCompleted(object sender, HaengSungAOI_WPF.Services.Vision.VisionProcedureCompletedEventArgs e)
-        {
-            // Write results to PLC
-            _plcService.WriteVisionResult(e.ProcedureName, e.IsOK);
-            
-            if (e.ProcedureName == "Align")
-            {
-                _plcService.WriteAlignPosition(e.AlignX, e.AlignY, e.AlignAngle);
-            }
-
-            // Update UI Image via ImageDisplayService (If needed)
-            // e.Procedure.GetOutputImage(...)
-            
-            _logger.LogInformation($"Vision Procedure {e.ProcedureName} Completed. Result: {(e.IsOK ? "OK" : "NG")}");
-        }
 
         private async Task ProcessScanOutResponseAsync(ScanOutReceivedEventArgs e)
         {
@@ -270,3 +229,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         }
     }
 }
+
+
+

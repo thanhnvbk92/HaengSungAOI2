@@ -73,6 +73,7 @@ namespace HaengSungAOI_WPF
             services.AddSingleton<IHmiSimulatorService, HmiSimulatorService>();
             services.AddSingleton<IHmiService, HmiService>();
             services.AddSingleton<IMachineHmiService, MachineHmiService>();
+            services.AddSingleton<IServoMonitorService, HaengSungAOI_WPF.Core.PLC.ServoMonitor>();
             services.AddSingleton<IMachineService, MachineService>();
 
             // ViewModels
@@ -182,3 +183,6 @@ namespace HaengSungAOI_WPF
         }
     }
 }
+
+
+

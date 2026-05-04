@@ -39,8 +39,13 @@ namespace HaengSungAOI_WPF.Services.Vision
         
         Task RunProcedureAsync(string procedureName);
         VmProcedure GetProcedure(string procedureName);
+        bool GetVisionStatus();
+        void SaveImage(string procedureName, string pid, bool isOK, string message);
         
         event EventHandler<VisionProcedureCompletedEventArgs> ProcedureCompleted;
         event EventHandler<string> SolutionLoaded;
     }
 }
+
+
+

@@ -32,3 +32,6 @@ namespace HaengSungAOI_WPF.Services.Database
         public const ushort AxisZ6 = 12;
     }
 }
+
+
+

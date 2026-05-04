@@ -16,3 +16,6 @@ namespace HaengSungAOI_WPF.Services
         void ReportError(ErrorType type, string source, string message, Exception ex = null);
     }
 }
+
+
+

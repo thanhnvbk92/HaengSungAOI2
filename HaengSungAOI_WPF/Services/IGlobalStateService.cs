@@ -18,3 +18,6 @@ namespace HaengSungAOI_WPF.Services
         public bool IsAutoMode { get; set; } = false;
     }
 }
+
+
+

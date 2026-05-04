@@ -17,3 +17,6 @@ namespace HaengSungAOI_WPF.Models
         public string Note {  get; set; }
     }
 }
+
+
+

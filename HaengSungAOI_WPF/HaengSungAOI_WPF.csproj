@@ -303,6 +303,7 @@
     <Compile Include="Services\Machine\IMachineService.cs" />
     <Compile Include="Services\Machine\IPlcService.cs" />
     <Compile Include="Services\Machine\IScanOutService.cs" />
+    <Compile Include="Services\Machine\IServoMonitorService.cs" />
     <Compile Include="Services\Machine\IoConfigService.cs" />
     <Compile Include="Services\Machine\MachineHmiService.cs" />
     <Compile Include="Services\Machine\MachineService.cs" />
@@ -316,13 +317,12 @@
     <Compile Include="Services\Vision\VisionService.cs" />
     <Compile Include="Services\Vision\VisionSolutionManager.cs" />
     <!-- Machine Logic -->
-    <Compile Include="Machine\Machine.cs" />
-    <Compile Include="Machine\Machine.PLC.cs" />
-    <Compile Include="Machine\Machine.Vision.cs" />
-    <Compile Include="Machine\MachineErrorList.cs" />
-    <Compile Include="Machine\PLC\PLCAddresses.cs" />
-    <Compile Include="Machine\PLC\PLCConstants.cs" />
-    <Compile Include="Machine\PLC\ServoAddressCalculator.cs" />
+    <Compile Include="Core\Machine.cs" />
+    <Compile Include="Core\Machine.PLC.cs" />
+    <Compile Include="Core\MachineErrorList.cs" />
+    <Compile Include="Core\PLC\PLCAddresses.cs" />
+    <Compile Include="Core\PLC\PLCConstants.cs" />
+    <Compile Include="Core\PLC\ServoAddressCalculator.cs" />
     <!-- Utils -->
     <Compile Include="Utils\ButtonMouseCommandBehavior.cs" />
     <Compile Include="Utils\LogManager.cs" />
@@ -425,3 +425,4 @@
   <Import Project="..\packages\EntityFramework.6.4.4\build\EntityFramework.targets" Condition="Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.targets')" />
   <Import Project="..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets" Condition="Exists('..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets')" />
 </Project>
+

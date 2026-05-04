@@ -791,3 +791,6 @@ namespace HaengSungAOI_WPF.ViewModels
         public double PlaceZ { get; set; }
     }
 }
+
+
+

@@ -28,7 +28,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 if (SetProperty(ref _currentEbrValue, value))
                 {
                     // Đồng bộ xuống Machine static variable
-                    HaengSungAOI_WPF.Machine.Machine.CurrentEbr = (value == "Not Set") ? "" : value;
+                    HaengSungAOI_WPF.Core.Machine.CurrentEbr = (value == "Not Set") ? "" : value;
                 }
             }
         }
@@ -266,3 +266,6 @@ namespace HaengSungAOI_WPF.ViewModels
 
     }
 }
+
+
+

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-namespace HaengSungAOI_WPF.Machine.PLC
+namespace HaengSungAOI_WPF.Core.PLC
 {
     public static class PLCAddresses
     {
@@ -496,3 +496,5 @@ namespace HaengSungAOI_WPF.Machine.PLC
         };
     }
 }
+
+

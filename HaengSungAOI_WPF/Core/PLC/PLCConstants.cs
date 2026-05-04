@@ -1,6 +1,6 @@
 using System;
 
-namespace HaengSungAOI_WPF.Machine.PLC
+namespace HaengSungAOI_WPF.Core.PLC
 {
     /// <summary>
     /// Defines monitoring groups for PLC data points to enable dynamic activation/deactivation
@@ -317,3 +317,5 @@ namespace HaengSungAOI_WPF.Machine.PLC
         #endregion
     }
 }
+
+

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core.PLC;
 using HaengSungAOI_WPF.Models;
 using System.Text.Json;
 
@@ -79,3 +79,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         }
     }
 }
+
+
+

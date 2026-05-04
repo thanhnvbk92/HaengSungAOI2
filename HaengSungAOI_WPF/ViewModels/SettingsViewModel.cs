@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core.PLC;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Utils;
@@ -282,3 +282,6 @@ namespace HaengSungAOI_WPF.ViewModels
         }
     }
 }
+
+
+

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using LeadshineHmi.Services;
 using LeadshineHmi.Core.Models;
 using System.ComponentModel;
-using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Core.PLC;
 
 namespace HaengSungAOI_WPF.Services.Machine
 {
@@ -363,7 +363,7 @@ namespace HaengSungAOI_WPF.Services.Machine
             await _hmiService.WriteTagAsync(tagName, value);
         }
 
-        public void SetActiveMonitoringGroups(HaengSungAOI_WPF.Machine.PLC.PLCMonitoringGroup groups)
+        public void SetActiveMonitoringGroups(HaengSungAOI_WPF.Core.PLC.PLCMonitoringGroup groups)
         {
             // Note: This method would be used to dynamiclly enable/disable polling groups in HmiEngine.
             // For now, it's implemented as a stub to satisfy the IPlcService interface.
@@ -377,3 +377,6 @@ namespace HaengSungAOI_WPF.Services.Machine
         }
     }
 }
+
+
+
