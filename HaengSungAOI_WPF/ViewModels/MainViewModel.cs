@@ -46,7 +46,7 @@ namespace HaengSungAOI_WPF.ViewModels
             set => SetProperty(ref _isRunning, value);
         }
 
-        private bool _isInitialized;
+        private bool _isInitialized=true;
         public bool IsInitialized
         {
             get => _isInitialized;
@@ -160,6 +160,7 @@ namespace HaengSungAOI_WPF.ViewModels
             // Khởi tạo trạng thái ban đầu
             CurrentModelName = _machineService.CurrentModel?.ModelName ?? "No Model Selected";
             UpdateErrorStatus();
+            IsInitialized = true;
         }
 
         private void UpdateErrorStatus()
@@ -197,7 +198,7 @@ namespace HaengSungAOI_WPF.ViewModels
         private void ShowModelJob()
         {
             StatusMessage = "Opening Model Selection...";
-            // TODO: Implement ShowModelConfigWindow in DialogService if needed
+            _dialogService.ShowModelConfigWindow(System.Windows.Application.Current.MainWindow);
         }
 
         private void ShowHistory()
@@ -215,6 +216,7 @@ namespace HaengSungAOI_WPF.ViewModels
         private void ShowErrorList()
         {
             StatusMessage = "Opening Error List...";
+            _dialogService.ShowErrorListWindow(System.Windows.Application.Current.MainWindow);
         }
 
         private void ShowLogs()

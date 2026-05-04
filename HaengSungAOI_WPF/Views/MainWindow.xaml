@@ -99,11 +99,11 @@
 
                 <!-- Separator -->
                 <Border Height="2" Background="#444" Margin="5,10"/>
-                
+
                 <!-- HMI Control Buttons Section -->
                 <TextBlock Text="HMI CONTROLS" Foreground="LightGray" FontSize="11" FontWeight="Bold" 
                            Margin="5,5,5,2" HorizontalAlignment="Center"/>
-                
+
                 <!-- Auto PB - MW0 / MW200 -->
                 <Button x:Name="btnHMIAuto" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -135,7 +135,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Manual PB - MW1 / MW201 -->
                 <Button x:Name="btnHMIManual" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -167,7 +167,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Reset PB - MW2 / MW202 -->
                 <Button x:Name="btnHMIReset" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -199,7 +199,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Origin - MW3 / MW203 -->
                 <Button x:Name="btnHMIOrigin" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -232,7 +232,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Start - MW4 / MW204 -->
                 <Button x:Name="btnHMIStart" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -265,7 +265,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Stop - MW5 / MW205 -->
                 <Button x:Name="btnHMIStop" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -298,7 +298,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Pause System - MW6 / MW206 -->
                 <!--<Button x:Name="btnHMIPause" Margin="5,3" Height="35" Tag="HMI_Pause_System"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -327,7 +327,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>-->
-                
+
                 <!-- Single Block Mode - MW7 / MW207 -->
                 <!--<Button x:Name="btnHMISingleBlock" Margin="5,3" Height="35" Tag="HMI_Single_Block_Mode"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -356,7 +356,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>-->
-                
+
                 <!-- Next Step PB - MW8 / MW208 -->
                 <!--<Button x:Name="btnHMINextStep" Margin="5,3" Height="35" Tag="HMI_Next_Step_PB"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -385,7 +385,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>-->
-                
+
                 <!-- Buzzer Off - MW9 / MW209 -->
                 <Button x:Name="btnHMIBuzzerOff" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -417,7 +417,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- End Cycle - MW10 / MW210 -->
                 <Button x:Name="btnHMIEndCycle" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -449,7 +449,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
+
                 <!-- Counter Reset PB - MW11 -->
                 <Button x:Name="btnHMICounterReset" Margin="5,3" Height="35"
                         Background="#232336" Foreground="White" FontWeight="SemiBold" FontSize="12"
@@ -481,12 +481,12 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                
-              
-                
+
+
+
                 <!-- Separator -->
                 <Border Height="2" Background="#444" Margin="5,10"/>
-                
+
                 <!-- Existing menu buttons -->
                 <Button Margin="0,5" Height="40"
                         Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
@@ -615,7 +615,7 @@
                                        HorizontalAlignment="Center" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- PCB Tray Quantity -->
                     <Border Grid.Column="1" Background="#2a2a3c" BorderBrush="#555" BorderThickness="1" CornerRadius="8" Margin="5,0,5,0" Padding="10">
                         <Border.Effect>
@@ -634,7 +634,7 @@
                                        HorizontalAlignment="Center" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- Blank Tray Quantity -->
                     <Border Grid.Column="2" Background="#2a2a3c" BorderBrush="#555" BorderThickness="1" CornerRadius="8" Margin="10,0,0,0" Padding="10">
                         <Border.Effect>
@@ -663,9 +663,9 @@
                 <TextBlock x:Name="MachineStatusTextBlock" Text="{Binding StatusMessage}" 
                            Foreground="Orange" FontSize="12" FontWeight="Bold" 
                            VerticalAlignment="Center" DockPanel.Dock="Left"/>
-                
-                    <!-- Removed PCB Slot and Tray Info panel from Status Bar -->
-                
+
+                <!-- Removed PCB Slot and Tray Info panel from Status Bar -->
+
                 <TextBlock x:Name="ErrorStatus" Text="{Binding ErrorStatusText}" 
                            Foreground="{Binding ErrorStatusColor}" FontSize="12" FontWeight="Bold" Width="Auto" />
                 <TextBlock Text="Robot: OK | Camera: Connected | Log: Đang ghi | Network: Stable"
@@ -678,11 +678,11 @@
              Phủ toàn bộ cửa sổ, ZIndex cao nhất.
              Ẩn bằng: LoadingOverlay.Visibility = Visibility.Collapsed  -->
         <Grid x:Name="LoadingOverlay"
-              Grid.Row="0" Grid.RowSpan="3"
-              Grid.Column="0" Grid.ColumnSpan="2"
+              Grid.Row="0" Grid.RowSpan="2"
+              Grid.Column="1"
               Panel.ZIndex="9999"
               Background="#CC0D0D1A"
-              Visibility="{Binding IsInitialized, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+              Visibility="{Binding IsInitialized, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="228,-76,-448,46">
 
             <Border Background="#1e1e2f"
                     CornerRadius="16"
@@ -757,7 +757,9 @@
                     <!-- Progress dots animation -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Ellipse Width="7" Height="7" Fill="#4488CC" Margin="4,0">
-                            <Ellipse.RenderTransform><TranslateTransform x:Name="Dot1"/></Ellipse.RenderTransform>
+                            <Ellipse.RenderTransform>
+                                <TranslateTransform x:Name="Dot1"/>
+                            </Ellipse.RenderTransform>
                             <Ellipse.Triggers>
                                 <EventTrigger RoutedEvent="Loaded">
                                     <BeginStoryboard>
@@ -774,7 +776,9 @@
                             </Ellipse.Triggers>
                         </Ellipse>
                         <Ellipse Width="7" Height="7" Fill="#5599DD" Margin="4,0">
-                            <Ellipse.RenderTransform><TranslateTransform x:Name="Dot2"/></Ellipse.RenderTransform>
+                            <Ellipse.RenderTransform>
+                                <TranslateTransform x:Name="Dot2"/>
+                            </Ellipse.RenderTransform>
                             <Ellipse.Triggers>
                                 <EventTrigger RoutedEvent="Loaded">
                                     <BeginStoryboard>
@@ -791,7 +795,9 @@
                             </Ellipse.Triggers>
                         </Ellipse>
                         <Ellipse Width="7" Height="7" Fill="#66AAEE" Margin="4,0">
-                            <Ellipse.RenderTransform><TranslateTransform x:Name="Dot3"/></Ellipse.RenderTransform>
+                            <Ellipse.RenderTransform>
+                                <TranslateTransform x:Name="Dot3"/>
+                            </Ellipse.RenderTransform>
                             <Ellipse.Triggers>
                                 <EventTrigger RoutedEvent="Loaded">
                                     <BeginStoryboard>

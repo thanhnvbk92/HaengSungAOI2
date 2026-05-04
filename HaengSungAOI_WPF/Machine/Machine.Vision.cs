@@ -27,7 +27,11 @@ namespace HaengSungAOI_WPF.Machine
         {
             try
             {
-                if (model == null) return;
+                if (model == null)
+                {
+                    _errorService.ReportError("Vision", "Cannot load vision solution: PCB Model is null.");
+                    return;
+                }
 
                 string visionSolutionPath = _visionManager.GetModelVisionSolutionPath(model);
 
@@ -45,29 +49,15 @@ namespace HaengSungAOI_WPF.Machine
                         InitializeVisionProcedures();
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Machine", $"Error loading vision solution: {ex.Message}");
-                LoadFallbackVisionSolution();
-            }
-        }
-
-        private void LoadFallbackVisionSolution()
-        {
-            try
-            {
-                string fallbackPath = Path.Combine(@"E:\VMSolution", "Default.SOL");
-                if (File.Exists(fallbackPath))
+                else
                 {
-                    VmSolution.Load(fallbackPath);
-                    _currentVisionSolutionPath = fallbackPath;
-                    InitializeVisionProcedures();
+                    _errorService.ReportError("Vision", $"Vision solution file not found for model: {model.ModelName}");
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error("Machine", $"Failed to load fallback vision solution: {ex.Message}");
+                Logger.Error("Machine", $"Error loading vision solution: {ex.Message}");
+                _errorService.ReportError("Vision", $"Failed to load vision solution for model {model?.ModelName}. Please check the VMaster configuration.", ex);
             }
         }
 

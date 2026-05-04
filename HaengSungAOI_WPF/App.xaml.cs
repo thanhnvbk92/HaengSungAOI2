@@ -87,6 +87,12 @@ namespace HaengSungAOI_WPF
             services.AddSingleton<MainWindow>();
             services.AddTransient<ManualOperations>();
             services.AddTransient<SettingsWindow>();
+            services.AddTransient<ErrorListWindow>(sp => 
+            {
+                var machineService = sp.GetRequiredService<IMachineService>();
+                return new ErrorListWindow(machineService.Machine);
+            });
+            services.AddTransient<ModelConfig>();
         }
 
         protected override async void OnStartup(StartupEventArgs e)

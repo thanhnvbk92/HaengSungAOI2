@@ -278,5 +278,25 @@ namespace HaengSungAOI_WPF.Services.UI
                 win.ShowDialog();
             }
         }
+        
+        public void ShowErrorListWindow(Window owner)
+        {
+            var win = _serviceProvider.GetService(typeof(ErrorListWindow)) as ErrorListWindow;
+            if (win != null)
+            {
+                win.Owner = owner;
+                win.ShowDialog();
+            }
+        }
+
+        public void ShowModelConfigWindow(Window owner)
+        {
+            var win = _serviceProvider.GetService(typeof(ModelConfig)) as ModelConfig;
+            if (win != null)
+            {
+                win.Owner = owner;
+                win.ShowDialog();
+            }
+        }
     }
 }
