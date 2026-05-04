@@ -1549,6 +1549,31 @@ namespace HaengSungAOI_WPF.Machine.PLC
         {
             _tcpClient.WriteMultipleRegisters(_unitIdentifier, address, values);
         }
+        public ushort[] ReadHoldingRegistersDirect(ushort address, ushort count)
+        {
+            return ReadHoldingRegistersDirectAsync(address, count).GetAwaiter().GetResult();
+        }
+
+        public async Task<ushort[]> ReadHoldingRegistersDirectAsync(ushort address, ushort count)
+        {
+            await _ioSemaphore.WaitAsync();
+            try
+            {
+                if (!IsConnected || _tcpClient == null) return new ushort[count];
+
+                var data = await Task.Run(() => _tcpClient.ReadHoldingRegisters<ushort>(_unitIdentifier, address, count));
+                return data.ToArray();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("PLCController", $"Error reading registers @ {address}: {ex.Message}", ex);
+                return new ushort[count];
+            }
+            finally
+            {
+                _ioSemaphore.Release();
+            }
+        }
         #endregion
 
         #region Helper Methods
