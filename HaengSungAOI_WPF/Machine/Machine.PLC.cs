@@ -1,10 +1,12 @@
 using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Models;
+using HaengSungAOI_WPF.Services;
+
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Services.Vision;
 using HaengSungAOI_WPF.Utils;
 using HaengSungAOI_WPF.ViewModels;
-using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -135,25 +137,12 @@ namespace HaengSungAOI_WPF.Machine
         }
     }
 
-    /// <summary>
-    /// Represents the working data for a single PCB as it moves through the machine
-    /// </summary>
-    public class WipData
-    {
-        public DateTime StartTime { get; set; } = DateTime.Now;
-        public string PID { get; set; }
-
-    }
 
     /// <summary>
     /// Machine partial class - PLC communication and vision trigger handling
     /// </summary>
     public partial class Machine
     {
-
-        private readonly ConcurrentQueue<WipData> _wipQueue1 = new ConcurrentQueue<WipData>();
-        private readonly ConcurrentQueue<WipData> _wipQueue2 = new ConcurrentQueue<WipData>();
-        private readonly ConcurrentQueue<WipData> _wipQueueScanout = new ConcurrentQueue<WipData>();
 
         string saveDir = AppConfig.SaveDir;
 
@@ -168,8 +157,6 @@ namespace HaengSungAOI_WPF.Machine
         // ActionBlock phân cụm (alignProcessor / cam2Processor / cam3Processor) đã đảm bảo
         // sequential access trong mỗi cụm camera, nên không cần lock thêm.
 
-        // Track inspection start time per procedure to measure tack time
-        private readonly ConcurrentDictionary<string, DateTime> _inspectionStartTimes = new ConcurrentDictionary<string, DateTime>();
 
         // Rising-edge detection: only trigger when value changes 0→1, NOT on every poll cycle
         private readonly ConcurrentDictionary<string, ushort> _previousVisionTriggerValues = new ConcurrentDictionary<string, ushort>();
@@ -188,10 +175,6 @@ namespace HaengSungAOI_WPF.Machine
         /// </summary>
         public void ClearAllQueues()
         {
-            // Xóa WIP Queue (các board đang dở trong machine)
-            while (_wipQueue1.TryDequeue(out _)) { }
-            while (_wipQueue2.TryDequeue(out _)) { }
-            while (_wipQueueScanout.TryDequeue(out _)) { }
 
             // Xóa In-Flight guard — cho phép Vision trigger chạy lại khi Start mới
             lock (_flightLock)
@@ -332,134 +315,63 @@ namespace HaengSungAOI_WPF.Machine
         private const ushort ALIGN_Y_ADDRESS = PLCConstants.ALIGN_Y_ADDRESS;
         private const ushort ALIGN_R_ADDRESS = PLCConstants.ALIGN_R_ADDRESS;
 
-        // Events for vision triggers
-        public event EventHandler<VisionTriggerEventArgs> AlignTriggered;
-        public event EventHandler<VisionTriggerEventArgs> Inspect1Triggered;
-        public event EventHandler<VisionTriggerEventArgs> Inspect2Triggered;
-        public event EventHandler<VisionTriggerEventArgs> Inspect3Triggered;
-        public event EventHandler<VisionTriggerEventArgs> Inspect4Triggered;
-        public event EventHandler<VisionTriggerEventArgs> Inspect5Triggered;
-        public event EventHandler<VisionTriggerEventArgs> Inspect6Triggered;
-
-        // Events for vision procedure completion (OnWorkEndStatusCallBack)
-        public event EventHandler<VisionProcedureCompletedEventArgs> AlignCompleted;
-        public event EventHandler<VisionProcedureCompletedEventArgs> Inspect1Completed;
-        public event EventHandler<VisionProcedureCompletedEventArgs> Inspect2Completed;
-        public event EventHandler<VisionProcedureCompletedEventArgs> Inspect3Completed;
-        public event EventHandler<VisionProcedureCompletedEventArgs> Inspect4Completed;
-        public event EventHandler<VisionProcedureCompletedEventArgs> Inspect5Completed;
-        public event EventHandler<VisionProcedureCompletedEventArgs> Inspect6Completed;
-
 
         /// <summary>
-        /// Initialize PLC Controller for HMI and axis control
+        /// Initialize PLC event subscriptions from IPlcService
         /// </summary>
-        private void InitializePLCController()
+        private void InitializePlcEvents()
         {
-            try
+            if (PLC == null) return;
+
+            PLC.VisionTriggered += (s, e) =>
             {
-                Logger.Info("Machine", "Initializing PLC Controller");
-
-                // Create PLC controller instance using constants
-                PLC = new PLCController(
-                    PLCConstants.PLC_IP_ADDRESS,
-                    PLCConstants.PLC_PORT,
-                    PLCConstants.PLC_UNIT_IDENTIFIER);
-
-                // Configure all PLC data points from constant dictionaries
-                int configuredCount = PLCConfiguration.ConfigureFromConstants(PLC);
-                Logger.Info("Machine", $"Configured {configuredCount} PLC data points");
-
-                // Configure vision trigger data points
-                ConfigureVisionTriggerTags();
-
-                // Subscribe to PLC events
-                PLC.DataChanged += OnPLCDataChanged;
-                PLC.ConnectionStatusChanged += OnPLCConnectionStatusChanged;
-                PLC.ErrorOccurred += OnPLCErrorOccurred;
-
-                // Connect to PLC
-                if (PLC.Connect())
+                string procedureName = e.ProcedureName;
+                
+                // Reject if previous callback for this procedure has not completed yet
+                lock (_flightLock)
                 {
-                    // Start polling PLC data
-                    PLC.Start();
-                    Logger.Info("Machine", "PLC Controller initialized and started successfully");
-                    _errorList.AddError(ErrorType.Information, "Machine", "PLC Controller connected");
-
-                    // Log performance analysis after configuration
-                    System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
+                    if (_proceduresInFlight.Contains(procedureName))
                     {
-                        PLC.LogPerformanceReport();
-                    });
+                        return;
+                    }
+                    _proceduresInFlight.Add(procedureName);
                 }
-                else
+
+                var item = new PLCWorkItem
                 {
-                    Logger.Error("Machine", "Failed to connect to PLC");
-                    _errorList.AddError(ErrorType.Error, "Machine", "PLC connection failed");
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Machine", "Error initializing PLC Controller", ex);
-                _errorList.AddException("Machine", "PLC Controller initialization failed", ex);
-            }
-        }
+                    Type = PLCWorkType.Vision,
+                    TagName = e.TagName,
+                    NewValue = e.TriggerValue,
+                    ProcedureName = procedureName
+                };
+                _visionProcessor.Post(item);
 
-        /// <summary>
-        /// Configure vision trigger PLC tags for monitoring
-        /// </summary>
-        private void ConfigureVisionTriggerTags()
-        {
-            try
-            {
-                Logger.Info("Machine", "Configuring vision trigger PLC tags");
+            };
 
-                // Configure vision trigger tags (for reading)
-                foreach (var kvp in _visionTriggerTags)
+            PLC.TrayUpdated += (s, e) =>
+            {
+                var item = new PLCWorkItem
                 {
-                    string tagName = kvp.Key;
-                    string procedureName = kvp.Value;
+                    Type = PLCWorkType.TrayUpdate,
+                    TagName = e.TagName,
+                    NewValue = e.NewValue
+                };
+                _ScanOutAndPackingProcessor.Post(item);
+            };
 
-                    // Extract the address number from tag name (e.g., "MW400" -> 400)
-                    int address = int.Parse(tagName.Substring(2));
-
-                    // Configure as holding register with polling using AddHoldingRegister
-                    PLC.AddHoldingRegister(tagName, (ushort)address, 1, $"Vision Trigger for {procedureName}");
-
-                    Logger.Debug("Machine", $"Configured vision trigger: {tagName} -> {procedureName} at address {address}");
-                }
-
-                // Configure vision result tags (for writing)
-                foreach (var kvp in _visionResultTags)
-                {
-                    string procedureName = kvp.Key;
-                    string tagName = kvp.Value;
-
-                    // Extract the address number from tag name (e.g., "MW410" -> 410)
-                    int address = int.Parse(tagName.Substring(2));
-
-                    // Configure as holding register for writing results
-                    PLC.AddHoldingRegister(tagName, (ushort)address, 1, $"Vision Result for {procedureName}");
-
-                    Logger.Debug("Machine", $"Configured vision result: {tagName} <- {procedureName} at address {address}");
-                }
-
-                // Configure Align position tags (LREAL = 8 bytes = 4 registers each)
-                PLC.AddHoldingRegister(ALIGN_X_TAG, ALIGN_X_ADDRESS, 4, "Align X Position (LREAL)");
-                PLC.AddHoldingRegister(ALIGN_Y_TAG, ALIGN_Y_ADDRESS, 4, "Align Y Position (LREAL)");
-                PLC.AddHoldingRegister(ALIGN_R_TAG, ALIGN_R_ADDRESS, 4, "Align R/Angle Position (LREAL)");
-
-                Logger.Debug("Machine", $"Configured Align position tags: {ALIGN_X_TAG}, {ALIGN_Y_TAG}, {ALIGN_R_TAG}");
-
-                // Note: SubscribeToVisionProcedureCallbacks is called separately after vision solution is loaded
-
-                Logger.Info("Machine", $"Configured {_visionTriggerTags.Count} vision trigger tags, {_visionResultTags.Count} result tags, and 3 align position tags");
-            }
-            catch (Exception ex)
+            PLC.AlarmChanged += (s, e) =>
             {
-                Logger.Error("Machine", "Error configuring vision trigger tags", ex);
-                _errorList.AddException("Machine", "Vision trigger tag configuration failed", ex);
-            }
+                var item = new PLCWorkItem
+                {
+                    Type = PLCWorkType.Alarm,
+                    TagName = e.AlarmName,
+                    NewValue = e.IsActive ? (ushort)1 : (ushort)0,
+                    Address = e.Address,
+                };
+                _MachineAlarmProcessor.Post(item);
+            };
+
+            PLC.ConnectionStatusChanged += OnPLCConnectionStatusChanged;
         }
 
         /// <summary>
@@ -483,12 +395,8 @@ namespace HaengSungAOI_WPF.Machine
                     return;
                 }
 
-                // Write 1 for OK, 0 for NG
-                ushort resultValue = isOK ? (ushort)1 : (ushort)2;
-                PLC.WriteHoldingRegister(tagName, resultValue);
-
-                string resultText = isOK ? "OK (1)" : "NG (2)";
-                Logger.Info("Machine", $"Wrote vision result: {procedureName} -> {tagName} = {resultText}");
+                // Write via IPlcService
+                PLC.WriteVisionResult(procedureName, isOK);
             }
             catch (Exception ex)
             {
@@ -534,18 +442,7 @@ namespace HaengSungAOI_WPF.Machine
                     return;
                 }
 
-                // Convert double to bytes (LREAL is 8 bytes)
-                byte[] bytes = BitConverter.GetBytes(value);
-
-                // Convert to 4 ushort values (each register is 2 bytes)
-                ushort[] registers = new ushort[4];
-                for (int i = 0; i < 4; i++)
-                {
-                    // Big-endian byte order for Modbus
-                    registers[i] = (ushort)((bytes[i * 2 + 1] << 8) | bytes[i * 2]);
-                }
-
-                PLC.WriteHoldingRegisters(tagName, registers);
+                PLC.WriteDouble(tagName, value);
 
                 Logger.Debug("Machine", $"Wrote LREAL to PLC: {tagName} = {value}");
             }
@@ -565,11 +462,7 @@ namespace HaengSungAOI_WPF.Machine
         {
             try
             {
-                WriteLRealToPLC(ALIGN_X_TAG, x);
-                WriteLRealToPLC(ALIGN_Y_TAG, y);
-                WriteLRealToPLC(ALIGN_R_TAG, angle);
-
-                //Logger.Info("Machine", $"Wrote Align position to PLC: X={x:F3}, Y={y:F3}, R={angle:F3}");
+                PLC.WriteAlignPosition(x, y, angle);
             }
             catch (Exception ex)
             {
@@ -670,106 +563,9 @@ namespace HaengSungAOI_WPF.Machine
             }
         }
 
-        /// <summary>
-        /// Handle PLC data changed events
-        /// </summary>
 
 
 
-        private void OnPLCDataChanged(object sender, PLCDataChangedEventArgs e)
-        {
-            try
-            {
-                PLCWorkItem item = null;
-
-                if (_visionTriggerTags.ContainsKey(e.DataPointName))
-                {
-
-                    ushort triggerValue = Convert.ToUInt16(e.NewValue);
-                    ushort prevValue = _previousVisionTriggerValues.GetOrAdd(e.DataPointName, 0);
-                    _previousVisionTriggerValues[e.DataPointName] = triggerValue;
-
-                    // Rising-edge only: 0→1 transition
-                    if (triggerValue == 1 && prevValue == 0)
-                    {
-                        string procedureName = _visionTriggerTags[e.DataPointName];
-
-                        // Reject if previous callback for this procedure has not completed yet
-                        lock (_flightLock)
-                        {
-                            if (_proceduresInFlight.Contains(procedureName))
-                            {
-                                //Logger.Warning("PLC", $"[SKIP] {procedureName} still in flight (callback not done). PLC re-trigger ignored.");
-                                return;
-                            }
-                            _proceduresInFlight.Add(procedureName);
-                        }
-
-                        item = new PLCWorkItem
-                        {
-                            Type = PLCWorkType.Vision,
-                            TagName = e.DataPointName,
-                            NewValue = triggerValue,
-                            ProcedureName = procedureName
-                        };
-                        _visionProcessor.Post(item);
-                    }
-                }
-                else if (e.DataPointName == "Product_OK_Trigger" || e.DataPointName == "Product_NG_Trigger")
-                {
-                    ushort triggerValue = Convert.ToUInt16(e.NewValue);
-                    ushort prevValue = _previousScanoutTriggerValues.GetOrAdd(e.DataPointName, 0);
-                    _previousScanoutTriggerValues[e.DataPointName] = triggerValue;
-                    if (triggerValue == 1 && prevValue == 0)
-                    {
-                        item = new PLCWorkItem
-                        {
-                            Type = PLCWorkType.ProductLog,
-                            TagName = e.DataPointName,
-                            NewValue = e.NewValue
-                        };
-                        _ScanOutAndPackingProcessor.Post(item);
-                    }
-
-                }
-                else if (e.DataPointName == "PCB_Slot" || e.DataPointName == "PCB_Trays" || e.DataPointName == "Blank_Trays")
-                {
-                    ushort currentValue = Convert.ToUInt16(e.NewValue);
-                    ushort prevValue = _previousTrayTriggerValues.GetOrAdd(e.DataPointName, ushort.MaxValue); // Khởi tạo giá trị rác ban đầu
-
-                    // ⚡ SỬA: Với các thanh ghi chứa Số Lượng khay/slot, ta chỉ cần bắt sự thay đổi giá trị (Value Changed) chứ không phải sườn lên
-                    if (currentValue != prevValue)
-                    {
-                        _previousTrayTriggerValues[e.DataPointName] = currentValue;
-
-                        item = new PLCWorkItem
-                        {
-                            Type = PLCWorkType.TrayUpdate,
-                            TagName = e.DataPointName,
-                            NewValue = e.NewValue
-                        };
-                        _ScanOutAndPackingProcessor.Post(item);
-                    }
-                }
-                else if (e.DataPointName.StartsWith("Alarm_"))
-                {
-                    // LỖI TRƯỚC ĐÓ Ở ĐÂY: Bạn hãy kiểm tra kỹ dòng dưới này
-                    item = new PLCWorkItem // Đảm bảo khởi tạo đúng class PLCWorkItem
-                    {
-                        Type = PLCWorkType.Alarm,
-                        TagName = e.DataPointName,
-                        NewValue = e.NewValue,
-                        Address = e.Address,
-                    };
-                    _MachineAlarmProcessor.Post(item);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Machine", $"Error: {e.DataPointName}", ex);
-            }
-        }
 
 
         /// <summary>
@@ -809,7 +605,7 @@ namespace HaengSungAOI_WPF.Machine
                         ErrorType errorType = GetAlarmErrorType(alarmName);
 
                         // Add to error list
-                        _errorList.AddError(errorType, "PLC Alarm", message);
+                        _errorService.ReportError(errorType, "PLC Alarm", message);
 
                         Logger.Warning("Machine", $"PLC Alarm activated: {alarmName} - {message}");
 
@@ -933,28 +729,13 @@ namespace HaengSungAOI_WPF.Machine
                 }
 
                 // Read PCB Slot count (MW498)
-                var pcbSlotData = PLC.GetDataPoint("PCB_Slot");
-                if (pcbSlotData != null && pcbSlotData.Value is ushort pcbSlotValue)
-                {
-                    PCB_Quantity = pcbSlotValue;
-                    //Logger.Info("Machine", $"Read PCB Slot from PLC: {PCB_Quantity}");
-                }
+                PCB_Quantity = PLC.GetUInt16Value("PCB_Slot");
 
                 // Read PCB Tray quantity (MW499)
-                var pcbTrayData = PLC.GetDataPoint("PCB_Trays");
-                if (pcbTrayData != null && pcbTrayData.Value is ushort pcbTrayValue)
-                {
-                    PCBTrayQuantity = pcbTrayValue;
-                    //Logger.Info("Machine", $"Read PCB Tray Quantity from PLC: {PCBTrayQuantity}");
-                }
+                PCBTrayQuantity = PLC.GetUInt16Value("PCB_Trays");
 
                 // Read Blank Tray quantity (MW4410)
-                var blankTrayData = PLC.GetDataPoint("Blank_Trays");
-                if (blankTrayData != null && blankTrayData.Value is ushort blankTrayValue)
-                {
-                    BlankTrayQuantity = blankTrayValue;
-                    //Logger.Info("Machine", $"Read Blank Tray Quantity from PLC: {BlankTrayQuantity}");
-                }
+                BlankTrayQuantity = PLC.GetUInt16Value("Blank_Trays");
             }
             catch (Exception ex)
             {
@@ -1011,7 +792,6 @@ namespace HaengSungAOI_WPF.Machine
         /// </summary>
         private async Task ProcessVisionTriggerAsync(string tagName, string procedureName, ushort triggerValue)
         {
-            _inspectionStartTimes[procedureName] = DateTime.Now;
             try
             {
                 var eventArgs = new VisionTriggerEventArgs(tagName, procedureName, triggerValue);
@@ -1024,8 +804,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_align != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_align, "Align");
-                            //Logger.Info("Machine", "Camera_align procedure started from PLC trigger");
-                            AlignTriggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1033,8 +811,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_inspect1 != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_inspect1, "Inspect1");
-                            //Logger.Info("Machine", "Camera_inspect1 procedure started from PLC trigger");
-                            Inspect1Triggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1042,8 +818,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_inspect2 != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_inspect2, "Inspect2");
-                            //Logger.Info("Machine", "Camera_inspect2 procedure started from PLC trigger");
-                            Inspect2Triggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1051,8 +825,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_inspect3 != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_inspect3, "Inspect3");
-                            //Logger.Info("Machine", "Camera_inspect3 procedure started from PLC trigger");
-                            Inspect3Triggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1060,8 +832,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_inspect4 != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_inspect4, "Inspect4");
-                            //Logger.Info("Machine", "Camera_inspect4 procedure started from PLC trigger");
-                            Inspect4Triggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1069,8 +839,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_inspect5 != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_inspect5, "Inspect5");
-                            //Logger.Info("Machine", "Camera_inspect5 procedure started from PLC trigger");
-                            Inspect5Triggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1078,8 +846,6 @@ namespace HaengSungAOI_WPF.Machine
                         if (Camera_inspect6 != null)
                         {
                             await WaitAndRunProcedureAsync(Camera_inspect6, "Inspect6");
-                            //Logger.Info("Machine", "Camera_inspect6 procedure started from PLC trigger");
-                            Inspect6Triggered?.Invoke(this, eventArgs);
                         }
                         break;
 
@@ -1093,7 +859,7 @@ namespace HaengSungAOI_WPF.Machine
             catch (Exception ex)
             {
                 Logger.Error("Machine", $"Error processing vision trigger {tagName} -> {procedureName}", ex);
-                _errorList.AddException("VisionTrigger", $"Failed to process {procedureName} trigger", ex);
+                _errorService.ReportError("VisionTrigger", $"Failed to process {procedureName} trigger", ex);
             }
         }
 
@@ -1129,7 +895,7 @@ namespace HaengSungAOI_WPF.Machine
             {
                 if (PLC != null && PLC.IsConnected)
                 {
-                    PLC.WriteHoldingRegister(tagName, 0);
+                    PLC.WriteRegister(tagName, 0);
                     //Logger.Debug("Machine", $"Reset vision trigger: {tagName}");
                 }
             }
@@ -1142,47 +908,30 @@ namespace HaengSungAOI_WPF.Machine
         /// <summary>
         /// Handle PLC connection status changes
         /// </summary>
-        private void OnPLCConnectionStatusChanged(object sender, PLCConnectionEventArgs e)
+        private void OnPLCConnectionStatusChanged(object sender, bool isConnected)
         {
             try
             {
-                if (e.IsConnected)
+                if (isConnected)
                 {
                     Logger.Info("Machine", "PLC connection established");
-                    _errorList.AddError(ErrorType.Information, "Machine", "PLC connected");
+                    _errorService.ReportError(ErrorType.Information, "Machine", "PLC connected");
                 }
                 else
                 {
                     Logger.Warning("Machine", "PLC connection lost");
-                    _errorList.AddError(ErrorType.Warning, "Machine", "PLC connection lost");
+                    _errorService.ReportError(ErrorType.Warning, "Machine", "PLC connection lost");
 
                     // If machine is running and PLC disconnects, consider stopping for safety
                     if (IsMachineEnabled)
                     {
                         Logger.Critical("Machine", "Stopping machine due to PLC disconnect");
-
                     }
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error("Machine", "Error handling PLC connection status change", ex);
-            }
-        }
-
-        /// <summary>
-        /// Handle PLC errors
-        /// </summary>
-        private void OnPLCErrorOccurred(object sender, string errorMessage)
-        {
-            try
-            {
-                Logger.Error("Machine", $"PLC Error: {errorMessage}");
-                _errorList.AddError(ErrorType.Error, "PLC", errorMessage);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Machine", "Error handling PLC error event", ex);
             }
         }
 
@@ -1217,10 +966,7 @@ namespace HaengSungAOI_WPF.Machine
                 bool isOK = ReadProcedureResult(procedure);
 
                 //var pid = GetPidSafe(procedure);
-                var pid = ReadBarcodeFromPLC(dataType.station1);
-                //Logger.Info("Inspect1: ", $"PID: {pid}");
-                //// Enqueue vào WIP ngay lập tức để Inspect2/3 có thể nhận PID
-                //_wipQueue1.Enqueue(new WipData { PID = pid });
+                var pid = ReadBarcodeFromPLC(StationType.Station1);
 
                 // Chạy nền: ghi thời gian vào DB (fire & forget)
                 _ = dbService.InsertVisionInputTimeAsync(pid, App.ActualMachineId.GetValueOrDefault());
@@ -1238,7 +984,7 @@ namespace HaengSungAOI_WPF.Machine
                         ErrorMessage = "PID không hợp lệ",
                         ScanoutTime = DateTime.Now
                     });
-                    _errorList.AddError(ErrorType.Information, "ProductLog", $" {pid} wrong format");
+                    _errorService.ReportError(ErrorType.Information, "ProductLog", $" {pid} wrong format");
                     //_wipQueue1.TryDequeue(out _);
                     SaveImageForFlow(procedure, pid, "Inspect1", saveDir, false, "Image Source1_ImageData", CurrentEbr, $" wrong format");
                     WriteVisionResult("Inspect1", false);
@@ -1286,14 +1032,14 @@ namespace HaengSungAOI_WPF.Machine
                     if (!isSameEbr)
                     {
                         errorMsg += $"{pid} is different with {currentEbr}\n";
-                        _errorList.AddError(ErrorType.Information, "ProductLog", $" {pid} wrong EBR");
+                        _errorService.ReportError(ErrorType.Information, "ProductLog", $" {pid} wrong EBR");
                     }
                     else if (!string.IsNullOrEmpty(foundEbr) && string.IsNullOrEmpty(CurrentEbr))
                     {
                         CurrentEbr = foundEbr;
                         System.Windows.Application.Current.Dispatcher.Invoke(() =>
                         {
-                            if (System.Windows.Application.Current.MainWindow is HaengSungAOI_WPF.MainWindow mw)
+                            if (System.Windows.Application.Current.MainWindow is HaengSungAOI_WPF.Views.MainWindow mw)
                                 mw.SetEbrFromBackend(foundEbr);
                         });
                     }
@@ -1306,7 +1052,7 @@ namespace HaengSungAOI_WPF.Machine
                         CurrentEbr = foundEbr;
                         System.Windows.Application.Current.Dispatcher.Invoke(() =>
                         {
-                            if (System.Windows.Application.Current.MainWindow is HaengSungAOI_WPF.MainWindow mw)
+                            if (System.Windows.Application.Current.MainWindow is HaengSungAOI_WPF.Views.MainWindow mw)
                                 mw.SetEbrFromBackend(foundEbr);
                         });
                     }
@@ -1320,7 +1066,7 @@ namespace HaengSungAOI_WPF.Machine
                 if (alreadyScanOut)
                 {
                     errorMsg += $"{pid} already scanout in HSMES\n";
-                    _errorList.AddError(ErrorType.Information, "ProductLog", $" {pid} already in HSMES");
+                    _errorService.ReportError(ErrorType.Information, "ProductLog", $" {pid} already in HSMES");
                 }
 
                 // --- Nhóm 3: Kiểm tra Block HSMES ---
@@ -1350,7 +1096,6 @@ namespace HaengSungAOI_WPF.Machine
                         ErrorMessage = errorMsg,
                         ScanoutTime = DateTime.Now
                     });
-                    //_wipQueue1.TryDequeue(out _);
                 }
                 if (IsByPass) isOK = true;
                 //_ = dbService.UpdateBlock(pid, "Scanout NG hoặc chưa chạy vision -> Thả lại vision", "", "", "Autovision");
@@ -1376,19 +1121,9 @@ namespace HaengSungAOI_WPF.Machine
                 bool isOK = ReadProcedureResult(procedure);
                 if (IsByPass) isOK = true;
 
-                var pid = ReadBarcodeFromPLC(dataType.station1);
+                var pid = ReadBarcodeFromPLC(StationType.Station1);
                 //Logger.Info("Inspect2: ", $"PID: {pid}");
 
-                //string pidToSave = "";
-
-                //if (_wipQueue1.TryPeek(out WipData current)) pidToSave = current.PID;
-                //else pidToSave = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-
-                //if (!pidToSave.ToLower().Contains("hs")) { isOK = false; }
-
-                SaveImageForFlow(procedure, pid, "Inspect2", saveDir, isOK, "Image Source2_ImageData", CurrentEbr, "");
-
-                //if (!isOK) _wipQueue1.TryDequeue(out _);
 
                 WriteVisionResult("Inspect2", isOK);
             }
@@ -1409,21 +1144,13 @@ namespace HaengSungAOI_WPF.Machine
             {
                 bool isOK = ReadProcedureResult(procedure);
                 if (IsByPass) isOK = true;
-                //string pidToSave = "";
-                //if (_wipQueue1.TryPeek(out WipData current)) pidToSave = current.PID;
-                //else pidToSave = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-
-                //if (!pidToSave.ToLower().Contains("hs")) { isOK = false; }
 
 
-                var pid = ReadBarcodeFromPLC(dataType.station1);
+                var pid = ReadBarcodeFromPLC(StationType.Station1);
                 //Logger.Info("Inspect3: ", $"PID: {pid}");
 
                 SaveImageForFlow(procedure, pid, "Inspect3", saveDir, isOK, "Image Source3_ImageData", CurrentEbr, "");
 
-                //_wipQueue1.TryDequeue(out _);
-                //var wip = new WipData() { PID = pidToSave };
-                //if (isOK) _wipQueue2.Enqueue(wip);
 
                 WriteVisionResult("Inspect3", isOK);
             }
@@ -1444,12 +1171,8 @@ namespace HaengSungAOI_WPF.Machine
                 bool isOK = ReadProcedureResult(procedure);
                 if (IsByPass) isOK = true;
 
-                //string pidToSave = "";
-                //if (_wipQueue2.TryPeek(out WipData current)) pidToSave = current.PID;
-                //else pidToSave = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-                //if (!pidToSave.ToLower().Contains("hs")) { isOK = false; }
 
-                var pid = ReadBarcodeFromPLC(dataType.station2);
+                var pid = ReadBarcodeFromPLC(StationType.Station2);
                 //Logger.Info("Inspect4: ", $"PID: {pid}");
 
                 SaveImageForFlow(procedure, pid, "Inspect4", saveDir, isOK, "Image Source4_ImageData", CurrentEbr, "");
@@ -1480,7 +1203,7 @@ namespace HaengSungAOI_WPF.Machine
                 //else pidToSave = DateTime.Now.ToString("yyyyMMddHHmmssfff");
                 //if (!pidToSave.ToLower().Contains("hs")) { isOK = false; }
 
-                var pid = ReadBarcodeFromPLC(dataType.station2);
+                var pid = ReadBarcodeFromPLC(StationType.Station2);
                 //Logger.Info("Inspect5: ", $"PID: {pid}");
 
                 SaveImageForFlow(procedure, pid, "Inspect5", saveDir, isOK, "Image Source5_ImageData", CurrentEbr, "");
@@ -1506,30 +1229,9 @@ namespace HaengSungAOI_WPF.Machine
                 bool isOK = ReadProcedureResult(procedure);
                 if (IsByPass) isOK = true;
 
-                //// Inspect6 là cuối nhóm Inspect4-5-6 → LUÔN dequeue _wipQueue2
-                //// Giống Inspect3 luôn dequeue _wipQueue1 để tránh PID cũ ảnh hưởng PCB tiếp theo
-                //string pidToSave = "";
-                //if (_wipQueue2.TryDequeue(out WipData current))
-                //    pidToSave = current.PID;
-                //else
-                //    pidToSave = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-                //if (!pidToSave.ToLower().Contains("hs")) { isOK = false; }
 
 
-                //// enqueue để xử lý scanout
-                //if (isOK)
-                //{
-                //    var wip = new WipData() { PID = pidToSave };
-                //    if (isOK) _wipQueueScanout.Enqueue(wip);
-                //}
-
-
-                ////double tackTime = 0;
-                ////if (_inspectionStartTimes.TryGetValue("Inspect6", out DateTime startTime))
-                ////    tackTime = (DateTime.Now - startTime).TotalSeconds;
-
-
-                var pid = ReadBarcodeFromPLC(dataType.station2);
+                var pid = ReadBarcodeFromPLC(StationType.Station2);
                 //Logger.Info("Inspect6: ", $"PID: {pid}");
 
                 SaveImageForFlow(procedure, pid, "Inspect6", saveDir, isOK, "Image Source6_ImageData", CurrentEbr, "");
@@ -1672,12 +1374,8 @@ namespace HaengSungAOI_WPF.Machine
                         encoder.Save(fileStream);
                     }
 
-                    // Đo thời gian hoàn thành (tack_time)
-                    double tackTime = 0;
-                    if (_inspectionStartTimes.TryGetValue(flowName, out DateTime startTime))
-                    {
-                        tackTime = (DateTime.Now - startTime).TotalSeconds;
-                    }
+                     // Đo thời gian hoàn thành (tack_time)
+                     double tackTime = 0;
 
                     ///////////////////////////////
                     // Lưu dữ liệu vào Database
@@ -1752,7 +1450,7 @@ namespace HaengSungAOI_WPF.Machine
             catch (Exception ex)
             {
                 Logger.Error("Machine", $"Error handling product log trigger {dataPointName}", ex);
-                _errorList.AddException("ProductLog", $"Failed to process product log trigger", ex);
+                _errorService.ReportError("ProductLog", $"Failed to process product log trigger", ex);
             }
         }
         /// <summary>
@@ -1770,7 +1468,7 @@ namespace HaengSungAOI_WPF.Machine
 
                 //Logger.Info("Machine", "Processing OK product log trigger (MW481)");
 
-                string barcode = ReadBarcodeFromPLC(dataType.FinalOk);
+                string barcode = ReadBarcodeFromPLC(StationType.FinalOk);
                 int slot = ReadSlotNumberFromPLC();
 
                 Logger.Info("Machine", $" Process OK Product Barcode: {barcode} - Slot: {slot}");
@@ -1796,7 +1494,7 @@ namespace HaengSungAOI_WPF.Machine
                     catch (Exception ex)
                     {
                         Logger.Error("ScanOut", "Error sending scan out trigger", ex);
-                        _errorList.AddException("ScanOut", "Scan out trigger failed", ex);
+                        _errorService.ReportError("ScanOut", "Scan out trigger failed", ex);
                     }
                 }
 
@@ -1804,7 +1502,7 @@ namespace HaengSungAOI_WPF.Machine
                 WriteScanOutResultToPLC(result);
 
 
-                //_errorList.AddError(ErrorType.Information, "ProductLog",
+                //_errorService.ReportError(ErrorType.Information, "ProductLog",
                 //    $"OK Product logged: {barcode}, Slot: {slot}, Send Scanout: {result}");
 
                 ClearProductLogTrigger("Product_OK_Trigger");
@@ -1815,7 +1513,7 @@ namespace HaengSungAOI_WPF.Machine
             catch (Exception ex)
             {
                 Logger.Error("Machine", "Error processing OK product log", ex);
-                _errorList.AddException("ProductLog", "Failed to process OK product", ex);
+                _errorService.ReportError("ProductLog", "Failed to process OK product", ex);
 
                 ClearProductLogTrigger("Product_OK_Trigger");
             }
@@ -1840,7 +1538,7 @@ namespace HaengSungAOI_WPF.Machine
                 //Logger.Info("Machine", "Processing NG product log trigger (MW482)");
 
                 // Read barcode from MW470-MW479
-                string barcode = ReadBarcodeFromPLC(dataType.FinalNg);
+                string barcode = ReadBarcodeFromPLC(StationType.FinalNg);
                 Logger.Info("Machine", $"NG Product Barcode: {barcode}");
 
                 // Log the NG product
@@ -1848,14 +1546,14 @@ namespace HaengSungAOI_WPF.Machine
 
 
 
-                //_errorList.AddError(ErrorType.Information, "ProductLog", $"Vision NG: {barcode}");
+                //_errorService.ReportError(ErrorType.Information, "ProductLog", $"Vision NG: {barcode}");
 
                 ClearProductLogTrigger("Product_NG_Trigger");
             }
             catch (Exception ex)
             {
                 Logger.Error("Machine", "Error processing NG product log", ex);
-                _errorList.AddException("ProductLog", "Failed to process NG product", ex);
+                _errorService.ReportError("ProductLog", "Failed to process NG product", ex);
 
                 // Clear the trigger even on error
                 ClearProductLogTrigger("Product_NG_Trigger");
@@ -1889,7 +1587,7 @@ namespace HaengSungAOI_WPF.Machine
 
                 // Perform DIRECT read from PLC to get latest values (not cached)
                 // This ensures we read the barcode AFTER it's been written by PLC
-                ushort[] registers = PLC.ReadHoldingRegistersDirect(startAddress, registerCount);
+                ushort[] registers = PLC.GetRegisterArrayValue(startAddress, registerCount);
 
                 if (registers == null || registers.Length == 0)
                 {
@@ -1931,15 +1629,15 @@ namespace HaengSungAOI_WPF.Machine
                 return string.Empty;
             }
         }
-        enum dataType
+        public enum StationType
         {
-            station1,
-            transfer,
-            station2,
+            Station1,
+            Transfer,
+            Station2,
             FinalOk,
             FinalNg
         }
-        private string ReadBarcodeFromPLC(dataType dataType)
+        private string ReadBarcodeFromPLC(StationType stationType)
         {
             try
             {
@@ -1950,13 +1648,13 @@ namespace HaengSungAOI_WPF.Machine
                 }
 
                 ushort startAddress = (ushort)450;
-                switch (dataType)
+                switch (stationType)
                 {
-                    case dataType.station1: startAddress = (ushort)450; break;
-                    case dataType.transfer: startAddress = (ushort)750; break;
-                    case dataType.station2: startAddress = (ushort)760; break;
-                    case dataType.FinalOk: startAddress = (ushort)460; break;
-                    case dataType.FinalNg: startAddress = (ushort)470; break;
+                    case StationType.Station1: startAddress = (ushort)450; break;
+                    case StationType.Transfer: startAddress = (ushort)750; break;
+                    case StationType.Station2: startAddress = (ushort)760; break;
+                    case StationType.FinalOk: startAddress = (ushort)460; break;
+                    case StationType.FinalNg: startAddress = (ushort)470; break;
                     default:
                         break;
                 }
@@ -1964,11 +1662,11 @@ namespace HaengSungAOI_WPF.Machine
 
                 // Perform DIRECT read from PLC to get latest values (not cached)
                 // This ensures we read the barcode AFTER it's been written by PLC
-                ushort[] registers = PLC.ReadHoldingRegistersDirect(startAddress, registerCount);
+                ushort[] registers = PLC.GetRegisterArrayValue(startAddress, registerCount);
 
                 if (registers == null || registers.Length == 0)
                 {
-                    Logger.Warning("Machine", $"Direct read of barcode registers {dataType.ToString()} returned empty");
+                    Logger.Warning("Machine", $"Direct read of barcode registers {stationType.ToString()} returned empty");
                     return string.Empty;
                 }
 
@@ -2002,7 +1700,7 @@ namespace HaengSungAOI_WPF.Machine
             }
             catch (Exception ex)
             {
-                Logger.Error("Machine", $"Error reading barcode from PLC {dataType.ToString()}", ex);
+                Logger.Error("Machine", $"Error reading barcode from PLC {stationType.ToString()}", ex);
                 return string.Empty;
             }
         }
@@ -2022,7 +1720,7 @@ namespace HaengSungAOI_WPF.Machine
                 }
 
                 // Perform DIRECT read from PLC to get latest value
-                ushort[] registers = PLC.ReadHoldingRegistersDirect(448, 1);
+                ushort[] registers = PLC.GetRegisterArrayValue(448, 1);
 
                 if (registers != null && registers.Length > 0)
                 {
@@ -2054,9 +1752,9 @@ namespace HaengSungAOI_WPF.Machine
                 }
 
                 // Clear all result registers first
-                PLC.WriteHoldingRegister("ScanOut_OK", 0);
-                PLC.WriteHoldingRegister("ScanOut_NG", 0);
-                PLC.WriteHoldingRegister("ScanOut_NGQuantity", 0);
+                PLC.WriteRegister("ScanOut_OK", 0);
+                PLC.WriteRegister("ScanOut_NG", 0);
+                PLC.WriteRegister("ScanOut_NGQuantity", 0);
 
                 Thread.Sleep(100);
 
@@ -2064,17 +1762,17 @@ namespace HaengSungAOI_WPF.Machine
                 switch (result)
                 {
                     case ScanOutResult.OK:
-                        PLC.WriteHoldingRegister("ScanOut_OK", 1);
+                        PLC.WriteRegister("ScanOut_OK", 1);
                         
                         break;
 
                     case ScanOutResult.NG:
-                        PLC.WriteHoldingRegister("ScanOut_NG", 1);
+                        PLC.WriteRegister("ScanOut_NG", 1);
                         //Logger.Info("Machine", "Wrote ScanOut result: NG (MW433 = 1)");
                         break;
 
                     case ScanOutResult.NGQuantity:
-                        PLC.WriteHoldingRegister("ScanOut_NGQuantity", 1);
+                        PLC.WriteRegister("ScanOut_NGQuantity", 1);
                        // Logger.Info("Machine", "Wrote ScanOut result: NGQuantity (MW434 = 1)");
                         break;
                 }
@@ -2096,7 +1794,7 @@ namespace HaengSungAOI_WPF.Machine
             {
                 if (PLC != null && PLC.IsConnected)
                 {
-                    PLC.WriteHoldingRegister(triggerName, 0);
+                    PLC.WriteRegister(triggerName, 0);
                     Logger.Debug("Machine", $"Cleared product log trigger: {triggerName}");
                 }
             }

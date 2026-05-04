@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using HaengSungAOI_WPF.Machine.PLC;
+
 
 
 namespace HaengSungAOI_WPF.Services.Machine
@@ -66,7 +66,16 @@ namespace HaengSungAOI_WPF.Services.Machine
         void WriteVisionResult(string procedureName, bool isOK);
         void WriteAlignPosition(double x, double y, double angle);
         void WriteRegister(string tagName, ushort value);
+        void WriteDouble(string tagName, double value);
+        System.Threading.Tasks.Task WriteRegisterAsync(string tagName, ushort value);
+        System.Threading.Tasks.Task WriteDoubleAsync(string tagName, double value);
+        System.Threading.Tasks.Task WriteRobotPositionAsync(string posName, double value);
+        System.Threading.Tasks.Task DownloadModelParametersAsync(IDictionary<string, object> parameters);
+        System.Threading.Tasks.Task SetHmiButtonAsync(string tagName, bool value);
         ushort[] GetRegisterArrayValue(string dataPointName);
+        double GetDoubleValue(string tagName);
+        ushort GetUInt16Value(string tagName);
+        short GetInt16Value(string tagName);
 
         /// <summary>
         /// Reads a range of holding registers from the PLC starting at the specified address.
@@ -89,8 +98,9 @@ namespace HaengSungAOI_WPF.Services.Machine
         void WriteCoil(string name, bool value);
 
         /// <summary>
-        /// Gets the underlying PLC controller for advanced operations.
+        /// Sets which groups of PLC tags should be actively monitored/polled.
         /// </summary>
-        PLCController Controller { get; }
+        /// <param name="groups">Flags representing the groups to monitor.</param>
+        void SetActiveMonitoringGroups(HaengSungAOI_WPF.Machine.PLC.PLCMonitoringGroup groups);
     }
 }

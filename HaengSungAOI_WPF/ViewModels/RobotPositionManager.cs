@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using HaengSungAOI_WPF.Models;
+using HaengSungAOI_WPF.Services.Machine;
 
 namespace HaengSungAOI_WPF.ViewModels
 {
@@ -9,11 +10,11 @@ namespace HaengSungAOI_WPF.ViewModels
     /// </summary>
     public class RobotPositionManager
     {
-        public ObservableCollection<RobotPositionEntry> InfeedRobotPositions { get; private set; }
-        public ObservableCollection<RobotPositionEntry> TransferRobotPositions { get; private set; }
-        public ObservableCollection<RobotPositionEntry> OutfeedRobotPositions { get; private set; }
-        public ObservableCollection<RobotPositionEntry> Inspect1RobotPositions { get; private set; }
-        public ObservableCollection<RobotPositionEntry> Inspect2RobotPositions { get; private set; }
+        public ObservableCollection<RobotPositionEntry> InfeedPositions { get; private set; }
+        public ObservableCollection<RobotPositionEntry> TransferPositions { get; private set; }
+        public ObservableCollection<RobotPositionEntry> OutfeedPositions { get; private set; }
+        public ObservableCollection<RobotPositionEntry> Inspect1Positions { get; private set; }
+        public ObservableCollection<RobotPositionEntry> Inspect2Positions { get; private set; }
 
         public RobotPositionManager()
         {
@@ -23,65 +24,65 @@ namespace HaengSungAOI_WPF.ViewModels
         private void InitializeCollections()
         {
             // Initialize Infeed Robot Positions (3-axis: X, Y, R)
-            InfeedRobotPositions = new ObservableCollection<RobotPositionEntry>
-        {
-           new RobotPositionEntry { Position = "Idle" },
-            new RobotPositionEntry { Position = "Pickup" },
-        new RobotPositionEntry { Position = "Place" }
+            InfeedPositions = new ObservableCollection<RobotPositionEntry>
+            {
+                new RobotPositionEntry { Position = "Idle" },
+                new RobotPositionEntry { Position = "Pickup" },
+                new RobotPositionEntry { Position = "Place" }
             };
 
             // Initialize Transfer Robot Positions (2-axis: X, Z)
-            TransferRobotPositions = new ObservableCollection<RobotPositionEntry>
+            TransferPositions = new ObservableCollection<RobotPositionEntry>
             {
-      new RobotPositionEntry { Position = "Idle" },
-    new RobotPositionEntry { Position = "Prepare Pickup" },
+                new RobotPositionEntry { Position = "Idle" },
+                new RobotPositionEntry { Position = "Prepare Pickup" },
                 new RobotPositionEntry { Position = "Pickup" },
-  new RobotPositionEntry { Position = "Prepare Place" },
-        new RobotPositionEntry { Position = "Place" },
-     new RobotPositionEntry { Position = "NG Position" }
-          };
+                new RobotPositionEntry { Position = "Prepare Place" },
+                new RobotPositionEntry { Position = "Place" },
+                new RobotPositionEntry { Position = "NG Position" }
+            };
 
             // Initialize Outfeed Robot Positions (2-axis: X, Y)
-            OutfeedRobotPositions = new ObservableCollection<RobotPositionEntry>
-       {
-           new RobotPositionEntry { Position = "Idle" },
- new RobotPositionEntry { Position = "Pickup" },
-      new RobotPositionEntry { Position = "OK Place 1" },
-    new RobotPositionEntry { Position = "OK Place 2" },
-     new RobotPositionEntry { Position = "OK Place 3" },
-             new RobotPositionEntry { Position = "OK Place 4" },
+            OutfeedPositions = new ObservableCollection<RobotPositionEntry>
+            {
+                new RobotPositionEntry { Position = "Idle" },
+                new RobotPositionEntry { Position = "Pickup" },
+                new RobotPositionEntry { Position = "OK Place 1" },
+                new RobotPositionEntry { Position = "OK Place 2" },
+                new RobotPositionEntry { Position = "OK Place 3" },
+                new RobotPositionEntry { Position = "OK Place 4" },
                 new RobotPositionEntry { Position = "OK Place 5" },
-      new RobotPositionEntry { Position = "OK Place 6" },
-             new RobotPositionEntry { Position = "NG Place" },
-        new RobotPositionEntry { Position = "Pickup Tray" },
-    new RobotPositionEntry { Position = "Place Tray" }
-  };
+                new RobotPositionEntry { Position = "OK Place 6" },
+                new RobotPositionEntry { Position = "NG Place" },
+                new RobotPositionEntry { Position = "Pickup Tray" },
+                new RobotPositionEntry { Position = "Place Tray" }
+            };
 
             // Initialize Inspect 1 Robot Positions (2-axis: Z, C)
-            Inspect1RobotPositions = new ObservableCollection<RobotPositionEntry>
- {
-      new RobotPositionEntry { Position = "Idle" },
+            Inspect1Positions = new ObservableCollection<RobotPositionEntry>
+            {
+                new RobotPositionEntry { Position = "Idle" },
                 new RobotPositionEntry { Position = "Focus 1" },
-    new RobotPositionEntry { Position = "Focus 2" },
-        new RobotPositionEntry { Position = "Focus 3" }
-   };
+                new RobotPositionEntry { Position = "Focus 2" },
+                new RobotPositionEntry { Position = "Focus 3" }
+            };
 
             // Initialize Inspect 2 Robot Positions (2-axis: Z, C)
-            Inspect2RobotPositions = new ObservableCollection<RobotPositionEntry>
+            Inspect2Positions = new ObservableCollection<RobotPositionEntry>
             {
-      new RobotPositionEntry { Position = "Idle" },
-     new RobotPositionEntry { Position = "Focus 1" },
-  new RobotPositionEntry { Position = "Focus 2" },
-         new RobotPositionEntry { Position = "Focus 3" },
-         new RobotPositionEntry { Position = "Unload" }
- };
+                new RobotPositionEntry { Position = "Idle" },
+                new RobotPositionEntry { Position = "Focus 1" },
+                new RobotPositionEntry { Position = "Focus 2" },
+                new RobotPositionEntry { Position = "Focus 3" },
+                new RobotPositionEntry { Position = "Unload" }
+            };
         }
 
         #region Load Operations
 
         public void LoadInfeedPositions(PCBModel model)
         {
-            var idle = InfeedRobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = InfeedPositions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 idle.X = model.PCBInfeed_IdleX;
@@ -94,7 +95,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 idle.Decel = model.PCBInfeed_Idle_Decel;
             }
 
-            var pickup = InfeedRobotPositions.FirstOrDefault(p => p.Position == "Pickup");
+            var pickup = InfeedPositions.FirstOrDefault(p => p.Position == "Pickup");
             if (pickup != null)
             {
                 pickup.X = model.PCBInfeed_PickupX;
@@ -107,7 +108,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 pickup.Decel = model.PCBInfeed_Pickup_Decel;
             }
 
-            var place = InfeedRobotPositions.FirstOrDefault(p => p.Position == "Place");
+            var place = InfeedPositions.FirstOrDefault(p => p.Position == "Place");
             if (place != null)
             {
                 place.X = model.PCBInfeed_PlaceX;
@@ -123,7 +124,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void LoadTransferPositions(PCBModel model)
         {
-            var idle = TransferRobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = TransferPositions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 idle.X = model.PCBTransfer_IdleX;
@@ -134,7 +135,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 idle.Decel = model.PCBTransfer_Idle_Decel;
             }
 
-            var preparePickup = TransferRobotPositions.FirstOrDefault(p => p.Position == "Prepare Pickup");
+            var preparePickup = TransferPositions.FirstOrDefault(p => p.Position == "Prepare Pickup");
             if (preparePickup != null)
             {
                 preparePickup.X = model.PCBTransfer_PreparePickupX;
@@ -145,7 +146,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 preparePickup.Decel = model.PCBTransfer_PreparePickup_Decel;
             }
 
-            var pickup = TransferRobotPositions.FirstOrDefault(p => p.Position == "Pickup");
+            var pickup = TransferPositions.FirstOrDefault(p => p.Position == "Pickup");
             if (pickup != null)
             {
                 pickup.X = model.PCBTransfer_PickupX;
@@ -156,7 +157,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 pickup.Decel = model.PCBTransfer_Pickup_Decel;
             }
 
-            var preparePlace = TransferRobotPositions.FirstOrDefault(p => p.Position == "Prepare Place");
+            var preparePlace = TransferPositions.FirstOrDefault(p => p.Position == "Prepare Place");
             if (preparePlace != null)
             {
                 preparePlace.X = model.PCBTransfer_PreparePlaceX;
@@ -167,7 +168,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 preparePlace.Decel = model.PCBTransfer_PreparePlace_Decel;
             }
 
-            var place = TransferRobotPositions.FirstOrDefault(p => p.Position == "Place");
+            var place = TransferPositions.FirstOrDefault(p => p.Position == "Place");
             if (place != null)
             {
                 place.X = model.PCBTransfer_PlaceX;
@@ -178,7 +179,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 place.Decel = model.PCBTransfer_Place_Decel;
             }
 
-            var ng = TransferRobotPositions.FirstOrDefault(p => p.Position == "NG Position");
+            var ng = TransferPositions.FirstOrDefault(p => p.Position == "NG Position");
             if (ng != null)
             {
                 ng.X = model.PCBTransfer_NGX;
@@ -192,7 +193,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void LoadOutfeedPositions(PCBModel model)
         {
-            var idle = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = OutfeedPositions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 idle.X = model.PCBOutfeed_IdleX;
@@ -203,7 +204,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 idle.Decel = model.PCBOutfeed_Idle_Decel;
             }
 
-            var pickup = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Pickup");
+            var pickup = OutfeedPositions.FirstOrDefault(p => p.Position == "Pickup");
             if (pickup != null)
             {
                 pickup.X = model.PCBOutfeed_PickupX;
@@ -216,36 +217,36 @@ namespace HaengSungAOI_WPF.ViewModels
 
             // OK Place positions
             LoadOutfeedOKPlacePosition(model, "OK Place 1",
-                  model.PCBOutfeed_PlaceOK1X, model.PCBOutfeed_PlaceOK1Y,
-              model.PCBOutfeed_PlaceOK1_SpeedX, model.PCBOutfeed_PlaceOK1_SpeedY,
-                 model.PCBOutfeed_PlaceOK1_Accel, model.PCBOutfeed_PlaceOK1_Decel);
+                model.PCBOutfeed_PlaceOK1X, model.PCBOutfeed_PlaceOK1Y,
+                model.PCBOutfeed_PlaceOK1_SpeedX, model.PCBOutfeed_PlaceOK1_SpeedY,
+                model.PCBOutfeed_PlaceOK1_Accel, model.PCBOutfeed_PlaceOK1_Decel);
 
             LoadOutfeedOKPlacePosition(model, "OK Place 2",
-          model.PCBOutfeed_PlaceOK2X, model.PCBOutfeed_PlaceOK2Y,
-             model.PCBOutfeed_PlaceOK2_SpeedX, model.PCBOutfeed_PlaceOK2_SpeedY,
-          model.PCBOutfeed_PlaceOK2_Accel, model.PCBOutfeed_PlaceOK2_Decel);
+                model.PCBOutfeed_PlaceOK2X, model.PCBOutfeed_PlaceOK2Y,
+                model.PCBOutfeed_PlaceOK2_SpeedX, model.PCBOutfeed_PlaceOK2_SpeedY,
+                model.PCBOutfeed_PlaceOK2_Accel, model.PCBOutfeed_PlaceOK2_Decel);
 
             LoadOutfeedOKPlacePosition(model, "OK Place 3",
-              model.PCBOutfeed_PlaceOK3X, model.PCBOutfeed_PlaceOK3Y,
-      model.PCBOutfeed_PlaceOK3_SpeedX, model.PCBOutfeed_PlaceOK3_SpeedY,
- model.PCBOutfeed_PlaceOK3_Accel, model.PCBOutfeed_PlaceOK3_Decel);
+                model.PCBOutfeed_PlaceOK3X, model.PCBOutfeed_PlaceOK3Y,
+                model.PCBOutfeed_PlaceOK3_SpeedX, model.PCBOutfeed_PlaceOK3_SpeedY,
+                model.PCBOutfeed_PlaceOK3_Accel, model.PCBOutfeed_PlaceOK3_Decel);
 
             LoadOutfeedOKPlacePosition(model, "OK Place 4",
- model.PCBOutfeed_PlaceOK4X, model.PCBOutfeed_PlaceOK4Y,
+                model.PCBOutfeed_PlaceOK4X, model.PCBOutfeed_PlaceOK4Y,
                 model.PCBOutfeed_PlaceOK4_SpeedX, model.PCBOutfeed_PlaceOK4_SpeedY,
-        model.PCBOutfeed_PlaceOK4_Accel, model.PCBOutfeed_PlaceOK4_Decel);
+                model.PCBOutfeed_PlaceOK4_Accel, model.PCBOutfeed_PlaceOK4_Decel);
 
             LoadOutfeedOKPlacePosition(model, "OK Place 5",
-            model.PCBOutfeed_PlaceOK5X, model.PCBOutfeed_PlaceOK5Y,
-    model.PCBOutfeed_PlaceOK5_SpeedX, model.PCBOutfeed_PlaceOK5_SpeedY,
-    model.PCBOutfeed_PlaceOK5_Accel, model.PCBOutfeed_PlaceOK5_Decel);
+                model.PCBOutfeed_PlaceOK5X, model.PCBOutfeed_PlaceOK5Y,
+                model.PCBOutfeed_PlaceOK5_SpeedX, model.PCBOutfeed_PlaceOK5_SpeedY,
+                model.PCBOutfeed_PlaceOK5_Accel, model.PCBOutfeed_PlaceOK5_Decel);
 
             LoadOutfeedOKPlacePosition(model, "OK Place 6",
-       model.PCBOutfeed_PlaceOK6X, model.PCBOutfeed_PlaceOK6Y,
-      model.PCBOutfeed_PlaceOK6_SpeedX, model.PCBOutfeed_PlaceOK6_SpeedY,
+                model.PCBOutfeed_PlaceOK6X, model.PCBOutfeed_PlaceOK6Y,
+                model.PCBOutfeed_PlaceOK6_SpeedX, model.PCBOutfeed_PlaceOK6_SpeedY,
                 model.PCBOutfeed_PlaceOK6_Accel, model.PCBOutfeed_PlaceOK6_Decel);
 
-            var ngPlace = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "NG Place");
+            var ngPlace = OutfeedPositions.FirstOrDefault(p => p.Position == "NG Place");
             if (ngPlace != null)
             {
                 ngPlace.X = model.PCBOutfeed_PlaceNGX;
@@ -256,7 +257,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 ngPlace.Decel = model.PCBOutfeed_PlaceNG_Decel;
             }
 
-            var pickupTray = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Pickup Tray");
+            var pickupTray = OutfeedPositions.FirstOrDefault(p => p.Position == "Pickup Tray");
             if (pickupTray != null)
             {
                 pickupTray.X = model.PCBOutfeed_PickupTrayX;
@@ -267,7 +268,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 pickupTray.Decel = model.PCBOutfeed_PickupTray_Decel;
             }
 
-            var placeTray = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Place Tray");
+            var placeTray = OutfeedPositions.FirstOrDefault(p => p.Position == "Place Tray");
             if (placeTray != null)
             {
                 placeTray.X = model.PCBOutfeed_PlaceTrayX;
@@ -280,9 +281,9 @@ namespace HaengSungAOI_WPF.ViewModels
         }
 
         private void LoadOutfeedOKPlacePosition(PCBModel model, string positionName,
-           float x, float y, float speedX, float speedY, float accel, float decel)
+            float x, float y, float speedX, float speedY, float accel, float decel)
         {
-            var position = OutfeedRobotPositions.FirstOrDefault(p => p.Position == positionName);
+            var position = OutfeedPositions.FirstOrDefault(p => p.Position == positionName);
             if (position != null)
             {
                 position.X = x;
@@ -296,7 +297,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void LoadInspect1Positions(PCBModel model)
         {
-            var idle = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = Inspect1Positions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 idle.Z = model.Inspect1_IdleZ;
@@ -307,7 +308,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 idle.Decel = model.Inspect1_Idle_Decel;
             }
 
-            var focus1 = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Focus 1");
+            var focus1 = Inspect1Positions.FirstOrDefault(p => p.Position == "Focus 1");
             if (focus1 != null)
             {
                 focus1.Z = model.Inspect1_Focus1;
@@ -318,7 +319,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 focus1.Decel = model.Inspect1_Focus1_Decel;
             }
 
-            var focus2 = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Focus 2");
+            var focus2 = Inspect1Positions.FirstOrDefault(p => p.Position == "Focus 2");
             if (focus2 != null)
             {
                 focus2.Z = model.Inspect1_Focus2;
@@ -329,7 +330,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 focus2.Decel = model.Inspect1_Focus2_Decel;
             }
 
-            var focus3 = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Focus 3");
+            var focus3 = Inspect1Positions.FirstOrDefault(p => p.Position == "Focus 3");
             if (focus3 != null)
             {
                 focus3.Z = model.Inspect1_Focus3;
@@ -343,7 +344,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void LoadInspect2Positions(PCBModel model)
         {
-            var idle = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = Inspect2Positions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 idle.Z = model.Inspect2_IdleZ;
@@ -354,7 +355,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 idle.Decel = model.Inspect2_Idle_Decel;
             }
 
-            var focus1 = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Focus 1");
+            var focus1 = Inspect2Positions.FirstOrDefault(p => p.Position == "Focus 1");
             if (focus1 != null)
             {
                 focus1.Z = model.Inspect2_Focus1;
@@ -365,7 +366,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 focus1.Decel = model.Inspect2_Focus1_Decel;
             }
 
-            var focus2 = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Focus 2");
+            var focus2 = Inspect2Positions.FirstOrDefault(p => p.Position == "Focus 2");
             if (focus2 != null)
             {
                 focus2.Z = model.Inspect2_Focus2;
@@ -376,7 +377,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 focus2.Decel = model.Inspect2_Focus2_Decel;
             }
 
-            var focus3 = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Focus 3");
+            var focus3 = Inspect2Positions.FirstOrDefault(p => p.Position == "Focus 3");
             if (focus3 != null)
             {
                 focus3.Z = model.Inspect2_Focus3;
@@ -387,7 +388,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 focus3.Decel = model.Inspect2_Focus3_Decel;
             }
 
-            var unload = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Unload");
+            var unload = Inspect2Positions.FirstOrDefault(p => p.Position == "Unload");
             if (unload != null)
             {
                 unload.Z = model.Inspect2_UnloadZ;
@@ -405,7 +406,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void SaveInfeedPositions(PCBModel model)
         {
-            var idle = InfeedRobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = InfeedPositions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 model.PCBInfeed_IdleX = idle.X;
@@ -416,13 +417,9 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBInfeed_Idle_SpeedR = idle.SpeedR;
                 model.PCBInfeed_Idle_Accel = idle.Accel;
                 model.PCBInfeed_Idle_Decel = idle.Decel;
-                // Update legacy speed for backward compatibility
-                model.PCBInfeedPick_Speed = idle.SpeedX;
-                model.PCBInfeedPick_Acceleration = idle.Accel;
-                model.PCBInfeedPick_Deceleration = idle.Decel;
             }
 
-            var pickup = InfeedRobotPositions.FirstOrDefault(p => p.Position == "Pickup");
+            var pickup = InfeedPositions.FirstOrDefault(p => p.Position == "Pickup");
             if (pickup != null)
             {
                 model.PCBInfeed_PickupX = pickup.X;
@@ -435,7 +432,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBInfeed_Pickup_Decel = pickup.Decel;
             }
 
-            var place = InfeedRobotPositions.FirstOrDefault(p => p.Position == "Place");
+            var place = InfeedPositions.FirstOrDefault(p => p.Position == "Place");
             if (place != null)
             {
                 model.PCBInfeed_PlaceX = place.X;
@@ -451,7 +448,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void SaveTransferPositions(PCBModel model)
         {
-            var idle = TransferRobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = TransferPositions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 model.PCBTransfer_IdleX = idle.X;
@@ -460,13 +457,9 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBTransfer_Idle_SpeedZ = idle.SpeedZ;
                 model.PCBTransfer_Idle_Accel = idle.Accel;
                 model.PCBTransfer_Idle_Decel = idle.Decel;
-                // Update legacy speed for backward compatibility
-                model.PCBTransfer_Speed = idle.SpeedX;
-                model.PCBTransfer_Acceleration = idle.Accel;
-                model.PCBTransfer_Deceleration = idle.Decel;
             }
 
-            var preparePickup = TransferRobotPositions.FirstOrDefault(p => p.Position == "Prepare Pickup");
+            var preparePickup = TransferPositions.FirstOrDefault(p => p.Position == "Prepare Pickup");
             if (preparePickup != null)
             {
                 model.PCBTransfer_PreparePickupX = preparePickup.X;
@@ -477,7 +470,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBTransfer_PreparePickup_Decel = preparePickup.Decel;
             }
 
-            var pickup = TransferRobotPositions.FirstOrDefault(p => p.Position == "Pickup");
+            var pickup = TransferPositions.FirstOrDefault(p => p.Position == "Pickup");
             if (pickup != null)
             {
                 model.PCBTransfer_PickupX = pickup.X;
@@ -488,7 +481,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBTransfer_Pickup_Decel = pickup.Decel;
             }
 
-            var preparePlace = TransferRobotPositions.FirstOrDefault(p => p.Position == "Prepare Place");
+            var preparePlace = TransferPositions.FirstOrDefault(p => p.Position == "Prepare Place");
             if (preparePlace != null)
             {
                 model.PCBTransfer_PreparePlaceX = preparePlace.X;
@@ -499,7 +492,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBTransfer_PreparePlace_Decel = preparePlace.Decel;
             }
 
-            var place = TransferRobotPositions.FirstOrDefault(p => p.Position == "Place");
+            var place = TransferPositions.FirstOrDefault(p => p.Position == "Place");
             if (place != null)
             {
                 model.PCBTransfer_PlaceX = place.X;
@@ -510,7 +503,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBTransfer_Place_Decel = place.Decel;
             }
 
-            var ng = TransferRobotPositions.FirstOrDefault(p => p.Position == "NG Position");
+            var ng = TransferPositions.FirstOrDefault(p => p.Position == "NG Position");
             if (ng != null)
             {
                 model.PCBTransfer_NGX = ng.X;
@@ -524,7 +517,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void SaveOutfeedPositions(PCBModel model)
         {
-            var idle = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = OutfeedPositions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 model.PCBOutfeed_IdleX = idle.X;
@@ -533,13 +526,9 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBOutfeed_Idle_SpeedY = idle.SpeedY;
                 model.PCBOutfeed_Idle_Accel = idle.Accel;
                 model.PCBOutfeed_Idle_Decel = idle.Decel;
-                // Update legacy speed for backward compatibility
-                model.PCBOutfeed_Speed = idle.SpeedX;
-                model.PCBOutfeed_Acceleration = idle.Accel;
-                model.PCBOutfeed_Deceleration = idle.Decel;
             }
 
-            var pickup = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Pickup");
+            var pickup = OutfeedPositions.FirstOrDefault(p => p.Position == "Pickup");
             if (pickup != null)
             {
                 model.PCBOutfeed_PickupX = pickup.X;
@@ -552,36 +541,36 @@ namespace HaengSungAOI_WPF.ViewModels
 
             // OK Place positions
             SaveOutfeedOKPlacePosition(model, "OK Place 1",
-                      ref model.PCBOutfeed_PlaceOK1X, ref model.PCBOutfeed_PlaceOK1Y,
-                 ref model.PCBOutfeed_PlaceOK1_SpeedX, ref model.PCBOutfeed_PlaceOK1_SpeedY,
-                 ref model.PCBOutfeed_PlaceOK1_Accel, ref model.PCBOutfeed_PlaceOK1_Decel);
+                ref model.PCBOutfeed_PlaceOK1X, ref model.PCBOutfeed_PlaceOK1Y,
+                ref model.PCBOutfeed_PlaceOK1_SpeedX, ref model.PCBOutfeed_PlaceOK1_SpeedY,
+                ref model.PCBOutfeed_PlaceOK1_Accel, ref model.PCBOutfeed_PlaceOK1_Decel);
 
             SaveOutfeedOKPlacePosition(model, "OK Place 2",
-                  ref model.PCBOutfeed_PlaceOK2X, ref model.PCBOutfeed_PlaceOK2Y,
-                       ref model.PCBOutfeed_PlaceOK2_SpeedX, ref model.PCBOutfeed_PlaceOK2_SpeedY,
-       ref model.PCBOutfeed_PlaceOK2_Accel, ref model.PCBOutfeed_PlaceOK2_Decel);
+                ref model.PCBOutfeed_PlaceOK2X, ref model.PCBOutfeed_PlaceOK2Y,
+                ref model.PCBOutfeed_PlaceOK2_SpeedX, ref model.PCBOutfeed_PlaceOK2_SpeedY,
+                ref model.PCBOutfeed_PlaceOK2_Accel, ref model.PCBOutfeed_PlaceOK2_Decel);
 
             SaveOutfeedOKPlacePosition(model, "OK Place 3",
-          ref model.PCBOutfeed_PlaceOK3X, ref model.PCBOutfeed_PlaceOK3Y,
+                ref model.PCBOutfeed_PlaceOK3X, ref model.PCBOutfeed_PlaceOK3Y,
                 ref model.PCBOutfeed_PlaceOK3_SpeedX, ref model.PCBOutfeed_PlaceOK3_SpeedY,
-           ref model.PCBOutfeed_PlaceOK3_Accel, ref model.PCBOutfeed_PlaceOK3_Decel);
+                ref model.PCBOutfeed_PlaceOK3_Accel, ref model.PCBOutfeed_PlaceOK3_Decel);
 
             SaveOutfeedOKPlacePosition(model, "OK Place 4",
-                     ref model.PCBOutfeed_PlaceOK4X, ref model.PCBOutfeed_PlaceOK4Y,
-            ref model.PCBOutfeed_PlaceOK4_SpeedX, ref model.PCBOutfeed_PlaceOK4_SpeedY,
-                        ref model.PCBOutfeed_PlaceOK4_Accel, ref model.PCBOutfeed_PlaceOK4_Decel);
+                ref model.PCBOutfeed_PlaceOK4X, ref model.PCBOutfeed_PlaceOK4Y,
+                ref model.PCBOutfeed_PlaceOK4_SpeedX, ref model.PCBOutfeed_PlaceOK4_SpeedY,
+                ref model.PCBOutfeed_PlaceOK4_Accel, ref model.PCBOutfeed_PlaceOK4_Decel);
 
             SaveOutfeedOKPlacePosition(model, "OK Place 5",
                 ref model.PCBOutfeed_PlaceOK5X, ref model.PCBOutfeed_PlaceOK5Y,
                 ref model.PCBOutfeed_PlaceOK5_SpeedX, ref model.PCBOutfeed_PlaceOK5_SpeedY,
-              ref model.PCBOutfeed_PlaceOK5_Accel, ref model.PCBOutfeed_PlaceOK5_Decel);
+                ref model.PCBOutfeed_PlaceOK5_Accel, ref model.PCBOutfeed_PlaceOK5_Decel);
 
             SaveOutfeedOKPlacePosition(model, "OK Place 6",
-            ref model.PCBOutfeed_PlaceOK6X, ref model.PCBOutfeed_PlaceOK6Y,
-          ref model.PCBOutfeed_PlaceOK6_SpeedX, ref model.PCBOutfeed_PlaceOK6_SpeedY,
-      ref model.PCBOutfeed_PlaceOK6_Accel, ref model.PCBOutfeed_PlaceOK6_Decel);
+                ref model.PCBOutfeed_PlaceOK6X, ref model.PCBOutfeed_PlaceOK6Y,
+                ref model.PCBOutfeed_PlaceOK6_SpeedX, ref model.PCBOutfeed_PlaceOK6_SpeedY,
+                ref model.PCBOutfeed_PlaceOK6_Accel, ref model.PCBOutfeed_PlaceOK6_Decel);
 
-            var ngPlace = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "NG Place");
+            var ngPlace = OutfeedPositions.FirstOrDefault(p => p.Position == "NG Place");
             if (ngPlace != null)
             {
                 model.PCBOutfeed_PlaceNGX = ngPlace.X;
@@ -592,7 +581,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBOutfeed_PlaceNG_Decel = ngPlace.Decel;
             }
 
-            var pickupTray = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Pickup Tray");
+            var pickupTray = OutfeedPositions.FirstOrDefault(p => p.Position == "Pickup Tray");
             if (pickupTray != null)
             {
                 model.PCBOutfeed_PickupTrayX = pickupTray.X;
@@ -603,7 +592,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.PCBOutfeed_PickupTray_Decel = pickupTray.Decel;
             }
 
-            var placeTray = OutfeedRobotPositions.FirstOrDefault(p => p.Position == "Place Tray");
+            var placeTray = OutfeedPositions.FirstOrDefault(p => p.Position == "Place Tray");
             if (placeTray != null)
             {
                 model.PCBOutfeed_PlaceTrayX = placeTray.X;
@@ -616,9 +605,9 @@ namespace HaengSungAOI_WPF.ViewModels
         }
 
         private void SaveOutfeedOKPlacePosition(PCBModel model, string positionName,
-        ref float x, ref float y, ref float speedX, ref float speedY, ref float accel, ref float decel)
+            ref float x, ref float y, ref float speedX, ref float speedY, ref float accel, ref float decel)
         {
-            var position = OutfeedRobotPositions.FirstOrDefault(p => p.Position == positionName);
+            var position = OutfeedPositions.FirstOrDefault(p => p.Position == positionName);
             if (position != null)
             {
                 x = position.X;
@@ -632,7 +621,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void SaveInspect1Positions(PCBModel model)
         {
-            var idle = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = Inspect1Positions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 model.Inspect1_IdleZ = idle.Z;
@@ -641,13 +630,9 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect1_Idle_SpeedC = idle.Speed;
                 model.Inspect1_Idle_Accel = idle.Accel;
                 model.Inspect1_Idle_Decel = idle.Decel;
-                // Update legacy speed for backward compatibility
-                model.Inspect1_Speed = idle.SpeedZ;
-                model.Inspect1_AccTime = idle.Accel;
-                model.Inspect1_DecTime = idle.Decel;
             }
 
-            var focus1 = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Focus 1");
+            var focus1 = Inspect1Positions.FirstOrDefault(p => p.Position == "Focus 1");
             if (focus1 != null)
             {
                 model.Inspect1_Focus1 = focus1.Z;
@@ -658,7 +643,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect1_Focus1_Decel = focus1.Decel;
             }
 
-            var focus2 = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Focus 2");
+            var focus2 = Inspect1Positions.FirstOrDefault(p => p.Position == "Focus 2");
             if (focus2 != null)
             {
                 model.Inspect1_Focus2 = focus2.Z;
@@ -669,7 +654,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect1_Focus2_Decel = focus2.Decel;
             }
 
-            var focus3 = Inspect1RobotPositions.FirstOrDefault(p => p.Position == "Focus 3");
+            var focus3 = Inspect1Positions.FirstOrDefault(p => p.Position == "Focus 3");
             if (focus3 != null)
             {
                 model.Inspect1_Focus3 = focus3.Z;
@@ -683,7 +668,7 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public void SaveInspect2Positions(PCBModel model)
         {
-            var idle = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Idle");
+            var idle = Inspect2Positions.FirstOrDefault(p => p.Position == "Idle");
             if (idle != null)
             {
                 model.Inspect2_IdleZ = idle.Z;
@@ -692,13 +677,9 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect2_Idle_SpeedC = idle.Speed;
                 model.Inspect2_Idle_Accel = idle.Accel;
                 model.Inspect2_Idle_Decel = idle.Decel;
-                // Update legacy speed for backward compatibility
-                model.Inspect2_Speed = idle.SpeedZ;
-                model.Inspect2_AccTime = idle.Accel;
-                model.Inspect2_DecTime = idle.Decel;
             }
 
-            var focus1 = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Focus 1");
+            var focus1 = Inspect2Positions.FirstOrDefault(p => p.Position == "Focus 1");
             if (focus1 != null)
             {
                 model.Inspect2_Focus1 = focus1.Z;
@@ -709,7 +690,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect2_Focus1_Decel = focus1.Decel;
             }
 
-            var focus2 = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Focus 2");
+            var focus2 = Inspect2Positions.FirstOrDefault(p => p.Position == "Focus 2");
             if (focus2 != null)
             {
                 model.Inspect2_Focus2 = focus2.Z;
@@ -720,7 +701,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect2_Focus2_Decel = focus2.Decel;
             }
 
-            var focus3 = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Focus 3");
+            var focus3 = Inspect2Positions.FirstOrDefault(p => p.Position == "Focus 3");
             if (focus3 != null)
             {
                 model.Inspect2_Focus3 = focus3.Z;
@@ -731,7 +712,7 @@ namespace HaengSungAOI_WPF.ViewModels
                 model.Inspect2_Focus3_Decel = focus3.Decel;
             }
 
-            var unload = Inspect2RobotPositions.FirstOrDefault(p => p.Position == "Unload");
+            var unload = Inspect2Positions.FirstOrDefault(p => p.Position == "Unload");
             if (unload != null)
             {
                 model.Inspect2_UnloadZ = unload.Z;
@@ -744,5 +725,69 @@ namespace HaengSungAOI_WPF.ViewModels
         }
 
         #endregion
+
+        #region PLC Position Sets (Used by ModelConfig.RobotPositions for direct PLC read/write)
+
+        /// <summary>
+        /// Shortcut position sets for PLC communication
+        /// </summary>
+        public RobotPositionSet Infeed { get; } = new RobotPositionSet();
+        public RobotPositionSet Transfer { get; } = new RobotPositionSet();
+        public RobotPositionSet Outfeed { get; } = new RobotPositionSet();
+        public RobotPositionSet Inspect1 { get; } = new RobotPositionSet();
+        public RobotPositionSet Inspect2 { get; } = new RobotPositionSet();
+
+        /// <summary>
+        /// Write all position sets to PLC
+        /// </summary>
+        public async System.Threading.Tasks.Task SaveAllPositionsToPLCAsync(IPlcService plc)
+        {
+            if (plc == null || !plc.IsConnected) return;
+
+            await System.Threading.Tasks.Task.Run(() =>
+            {
+                // Write Infeed positions
+                WritePositionSetToPLC(plc, "Infeed", Infeed);
+                // Write Transfer positions
+                WritePositionSetToPLC(plc, "Transfer", Transfer);
+                // Write Outfeed positions
+                WritePositionSetToPLC(plc, "Outfeed", Outfeed);
+                // Write Inspect1 positions
+                WritePositionSetToPLC(plc, "Inspect1", Inspect1);
+                // Write Inspect2 positions
+                WritePositionSetToPLC(plc, "Inspect2", Inspect2);
+            });
+        }
+
+        private void WritePositionSetToPLC(IPlcService plc, string prefix, RobotPositionSet pos)
+        {
+            plc.WriteDouble($"{prefix}_StandbyX", pos.StandbyX);
+            plc.WriteDouble($"{prefix}_StandbyY", pos.StandbyY);
+            plc.WriteDouble($"{prefix}_StandbyZ", pos.StandbyZ);
+            plc.WriteDouble($"{prefix}_PickX", pos.PickX);
+            plc.WriteDouble($"{prefix}_PickY", pos.PickY);
+            plc.WriteDouble($"{prefix}_PickZ", pos.PickZ);
+            plc.WriteDouble($"{prefix}_PlaceX", pos.PlaceX);
+            plc.WriteDouble($"{prefix}_PlaceY", pos.PlaceY);
+            plc.WriteDouble($"{prefix}_PlaceZ", pos.PlaceZ);
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// DTO for robot position data used in PLC communication
+    /// </summary>
+    public class RobotPositionSet
+    {
+        public double StandbyX { get; set; }
+        public double StandbyY { get; set; }
+        public double StandbyZ { get; set; }
+        public double PickX { get; set; }
+        public double PickY { get; set; }
+        public double PickZ { get; set; }
+        public double PlaceX { get; set; }
+        public double PlaceY { get; set; }
+        public double PlaceZ { get; set; }
     }
 }

@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Services;
 using HaengSungAOI_WPF.Services.Machine;
+using HaengSungAOI_WPF.Services.UI;
+using System.Windows.Input;
 
 namespace HaengSungAOI_WPF.ViewModels
 {
@@ -14,6 +16,7 @@ namespace HaengSungAOI_WPF.ViewModels
         private readonly IGlobalStateService _globalState;
         private readonly IMachineService _machineService;
         private readonly IErrorService _errorService;
+        private readonly MainWindowDialogService _dialogService;
         public HmiViewModel Hmi { get; }
 
         private string _currentEbrValue = "Not Set";
@@ -30,37 +33,111 @@ namespace HaengSungAOI_WPF.ViewModels
             }
         }
 
-        [ObservableProperty]
         private string _statusMessage = "Ready";
-
-        [ObservableProperty]
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
+        }
         private bool _isRunning;
+        public bool IsRunning
+        {
+            get => _isRunning;
+            set => SetProperty(ref _isRunning, value);
+        }
 
-        [ObservableProperty]
         private bool _isInitialized;
+        public bool IsInitialized
+        {
+            get => _isInitialized;
+            set => SetProperty(ref _isInitialized, value);
+        }
 
-        [ObservableProperty]
         private string _currentModelName = "No Model Selected";
+        public string CurrentModelName
+        {
+            get => _currentModelName;
+            set => SetProperty(ref _currentModelName, value);
+        }
 
-        [ObservableProperty]
         private string _errorStatusText = "System OK";
+        public string ErrorStatusText
+        {
+            get => _errorStatusText;
+            set => SetProperty(ref _errorStatusText, value);
+        }
 
-        [ObservableProperty]
         private string _errorStatusColor = "#00FF00"; // Lime
+        public string ErrorStatusColor
+        {
+            get => _errorStatusColor;
+            set => SetProperty(ref _errorStatusColor, value);
+        }
 
-        [ObservableProperty]
         private string _errorListButtonContent = "Error List";
+        public string ErrorListButtonContent
+        {
+            get => _errorListButtonContent;
+            set => SetProperty(ref _errorListButtonContent, value);
+        }
 
-        [ObservableProperty]
         private string _errorListButtonBackground = "#232336";
+        public string ErrorListButtonBackground
+        {
+            get => _errorListButtonBackground;
+            set => SetProperty(ref _errorListButtonBackground, value);
+        }
+
+        private string _pcbSlotText = "0/48";
+        public string PcbSlotText
+        {
+            get => _pcbSlotText;
+            set => SetProperty(ref _pcbSlotText, value);
+        }
+
+        private string _pcbTrayQuantityText = "0";
+        public string PcbTrayQuantityText
+        {
+            get => _pcbTrayQuantityText;
+            set => SetProperty(ref _pcbTrayQuantityText, value);
+        }
+
+        private string _blankTrayQuantityText = "0";
+        public string BlankTrayQuantityText
+        {
+            get => _blankTrayQuantityText;
+            set => SetProperty(ref _blankTrayQuantityText, value);
+        }
+
+        private System.Windows.Media.Brush _pcbSlotForeground = System.Windows.Media.Brushes.White;
+        public System.Windows.Media.Brush PcbSlotForeground
+        {
+            get => _pcbSlotForeground;
+            set => SetProperty(ref _pcbSlotForeground, value);
+        }
+
+        private System.Windows.Media.Brush _pcbTrayQuantityForeground = System.Windows.Media.Brushes.White;
+        public System.Windows.Media.Brush PcbTrayQuantityForeground
+        {
+            get => _pcbTrayQuantityForeground;
+            set => SetProperty(ref _pcbTrayQuantityForeground, value);
+        }
+
+        private System.Windows.Media.Brush _blankTrayQuantityForeground = System.Windows.Media.Brushes.White;
+        public System.Windows.Media.Brush BlankTrayQuantityForeground
+        {
+            get => _blankTrayQuantityForeground;
+            set => SetProperty(ref _blankTrayQuantityForeground, value);
+        }
 
         public ObservableCollection<InspectionResult> InspectionHistory { get; } = new ObservableCollection<InspectionResult>();
 
-        public MainViewModel(IGlobalStateService globalState, IMachineService machineService, HmiViewModel hmi, IErrorService errorService)
+        public MainViewModel(IGlobalStateService globalState, IMachineService machineService, HmiViewModel hmi, IErrorService errorService, MainWindowDialogService dialogService)
         {
             _globalState = globalState;
             _machineService = machineService;
             _errorService = errorService;
+            _dialogService = dialogService;
             Hmi = hmi;
 
             _machineService.OnRunningStateChanged += (running) => IsRunning = running;
@@ -85,116 +162,105 @@ namespace HaengSungAOI_WPF.ViewModels
             UpdateErrorStatus();
         }
 
-        [RelayCommand]
-        private void ChangeLanguage(string cultureCode)
-        {
-            // Logic chuyển đổi ngôn ngữ
-            StatusMessage = $"Language changed to: {cultureCode}";
-            // Ở đây có thể gọi một ILocalizationService
-        }
-
         private void UpdateErrorStatus()
         {
-            int critical = _errorService.CriticalErrorCount;
-            int unacknowledged = _errorService.UnacknowledgedErrorCount;
             int total = _errorService.TotalErrorCount;
-
-            if (critical > 0)
-            {
-                ErrorStatusText = $"CRITICAL: {critical} critical error(s)";
-                ErrorStatusColor = "#FF0000"; // Red
-                ErrorListButtonBackground = "#FF0000";
-            }
-            else if (unacknowledged > 0)
-            {
-                ErrorStatusText = $"ERRORS: {unacknowledged} unacknowledged error(s)";
-                ErrorStatusColor = "#FFA500"; // Orange
-                ErrorListButtonBackground = "#FFA500";
-            }
-            else
-            {
-                ErrorStatusText = "System OK";
-                ErrorStatusColor = "#00FF00"; // Lime
-                ErrorListButtonBackground = "#232336";
-            }
-
+            ErrorStatusText = total > 0 ? $"{total} Active Errors" : "System OK";
+            ErrorStatusColor = total > 0 ? "#FF0000" : "#00FF00";
+            ErrorListButtonBackground = total > 0 ? "#FF4444" : "#232336";
             ErrorListButtonContent = total > 0 ? $"Error List ({total})" : "Error List";
         }
 
-        [RelayCommand]
+        // Removed HMI buttons from MainViewModel
+
+        private void ChangeLanguage(string cultureCode)
+        {
+            StatusMessage = $"Language changed to: {cultureCode}";
+        }
+
         private void StartMachine()
         {
             _machineService.Start();
         }
 
-        [RelayCommand]
         private void StopMachine()
         {
             _machineService.Stop();
         }
 
-        [RelayCommand]
+        private void ShowManualOperations()
+        {
+            StatusMessage = "Opening Manual Operations...";
+            _dialogService.ShowManualOperationsWindow(System.Windows.Application.Current.MainWindow);
+        }
+
         private void ShowModelJob()
         {
-            _statusMessage = "Opening Model/Job Selection...";
-            // Logic mở cửa sổ Model/Job
+            StatusMessage = "Opening Model Selection...";
+            // TODO: Implement ShowModelConfigWindow in DialogService if needed
         }
 
-        [RelayCommand]
         private void ShowHistory()
         {
-            _statusMessage = "Opening History...";
+            StatusMessage = "Opening History...";
+            _dialogService.ShowHistoryWindow(System.Windows.Application.Current.MainWindow);
         }
 
-        [RelayCommand]
         private void ShowSettings()
         {
-            _statusMessage = "Opening Settings...";
+            StatusMessage = "Opening Settings...";
+            _dialogService.ShowSettingsWindow(System.Windows.Application.Current.MainWindow);
         }
 
-        [RelayCommand]
         private void ShowErrorList()
         {
-            _statusMessage = "Opening Error List...";
+            StatusMessage = "Opening Error List...";
         }
 
-        [RelayCommand]
         private void ShowLogs()
         {
-            _statusMessage = "Opening Logs...";
+            StatusMessage = "Opening Logs...";
         }
 
-        [RelayCommand]
         private void ShowDatabase()
         {
-            _statusMessage = "Opening Database...";
+            StatusMessage = "Opening Database...";
         }
 
-        [RelayCommand]
         private void ShowCamera()
         {
-            _statusMessage = "Opening Camera...";
+            StatusMessage = "Opening Camera...";
         }
 
-        [RelayCommand]
         private void ShowHelp()
         {
-            _statusMessage = "Opening Help...";
+            StatusMessage = "Opening Help...";
         }
 
-        [RelayCommand]
         private void ExitApplication()
         {
             System.Windows.Application.Current.Shutdown();
         }
 
-        [RelayCommand]
         private void EditTrayQuantity(string type)
         {
-            // Logic ShowTrayQuantityEditDialog sẽ được gọi ở đây hoặc qua Service
-            // Để đơn giản và tuân thủ MVVM, ta có thể dùng IDialogService nếu có, 
-            // hoặc phát ra một Message/Event để View hiển thị Dialog.
             StatusMessage = $"Editing {type} Quantity...";
         }
+
+        public System.Windows.Input.ICommand ChangeLanguageCommand => new RelayCommand<string>(ChangeLanguage);
+        public System.Windows.Input.ICommand StartMachineCommand => new RelayCommand(StartMachine);
+        public System.Windows.Input.ICommand StopMachineCommand => new RelayCommand(StopMachine);
+        public System.Windows.Input.ICommand ShowManualOperationsCommand => new RelayCommand(ShowManualOperations);
+        public System.Windows.Input.ICommand ShowModelJobCommand => new RelayCommand(ShowModelJob);
+        public System.Windows.Input.ICommand ShowHistoryCommand => new RelayCommand(ShowHistory);
+        public System.Windows.Input.ICommand ShowSettingsCommand => new RelayCommand(ShowSettings);
+        public System.Windows.Input.ICommand ShowErrorListCommand => new RelayCommand(ShowErrorList);
+        public System.Windows.Input.ICommand ShowLogsCommand => new RelayCommand(ShowLogs);
+        public System.Windows.Input.ICommand ShowDatabaseCommand => new RelayCommand(ShowDatabase);
+        public System.Windows.Input.ICommand ShowCameraCommand => new RelayCommand(ShowCamera);
+        public System.Windows.Input.ICommand ShowHelpCommand => new RelayCommand(ShowHelp);
+        public System.Windows.Input.ICommand ExitApplicationCommand => new RelayCommand(ExitApplication);
+        public System.Windows.Input.ICommand EditTrayQuantityCommand => new RelayCommand<string>(EditTrayQuantity);
+
     }
 }

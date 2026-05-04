@@ -14,13 +14,15 @@ using HaengSungAOI_WPF.Services.UI;
 using HaengSungAOI_WPF.ViewModels;
 using HaengSungAOI_WPF.Services.Database;
 using System.Configuration;
+using LeadshineHmi.Services;
+using HaengSungAOI_WPF.Views;
 
 namespace HaengSungAOI_WPF
 {
     public partial class App : Application
     {
-        private readonly IHost _host;
-        public IServiceProvider ServiceProvider => _host.Services;
+        private ServiceProvider _serviceProvider;
+        public IServiceProvider ServiceProvider => _serviceProvider;
         
         public static IMachineService MachineService => ((App)Current).ServiceProvider.GetService<IMachineService>();
         public static IPlcService PlcService => ((App)Current).ServiceProvider.GetService<IPlcService>();
@@ -41,47 +43,55 @@ namespace HaengSungAOI_WPF
                 return;
             }
 
-            _host = Host.CreateDefaultBuilder()
-                .ConfigureServices((context, services) =>
-                {
-                    ConfigureServices(services);
-                })
-                .ConfigureLogging(logging =>
-                {
-                    logging.AddDebug();
-                    logging.AddConsole();
-                })
-                .Build();
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            _serviceProvider = services.BuildServiceProvider();
         }
 
         private void ConfigureServices(IServiceCollection services)
         {
+            // Logging
+            services.AddLogging(configure => 
+            {
+                // configure.AddConsole(); // Nếu cần thiết
+            });
+
             // Core Services
             services.AddSingleton<IGlobalStateService, GlobalStateService>();
             services.AddSingleton<AutoVisionDbService>();
+            services.AddSingleton<InspectionHistoryManager>();
+            services.AddSingleton<IModelDatabaseManager, ModelDatabaseManager>();
             services.AddSingleton<IErrorService, ErrorService>();
+            services.AddSingleton<MainWindowDialogService>();
 
             // Machine & Hardware Services
-            services.AddSingleton<IPlcService, PlcService>();
+            services.AddSingleton<IPlcService, HmiPlcService>();
             services.AddSingleton<IVisionService, VisionService>();
             services.AddSingleton<IScanOutService, ScanOutService>();
             services.AddSingleton<IImageDisplayService, ImageDisplayService>();
+            services.AddSingleton<IIoConfigService, IoConfigService>();
+            services.AddSingleton<IHmiSimulatorService, HmiSimulatorService>();
             services.AddSingleton<IHmiService, HmiService>();
+            services.AddSingleton<IMachineHmiService, MachineHmiService>();
             services.AddSingleton<IMachineService, MachineService>();
 
             // ViewModels
             services.AddSingleton<HmiViewModel>();
             services.AddSingleton<MainViewModel>();
+            services.AddTransient<ModelConfigViewModel>();
+            services.AddTransient<HistoryViewModel>();
+            services.AddTransient<ManualOperationsViewModel>();
+            services.AddTransient<SettingsViewModel>();
 
             // Windows
             services.AddSingleton<MainWindow>();
+            services.AddTransient<ManualOperations>();
+            services.AddTransient<SettingsWindow>();
         }
 
         protected override async void OnStartup(StartupEventArgs e)
         {
-            if (_host == null) return;
-
-            await _host.StartAsync();
+            if (_serviceProvider == null) return;
 
             // Khởi tạo Global State từ DB (giữ nguyên logic cũ nhưng bóc tách)
             await InitializeGlobalStateAsync();
@@ -90,7 +100,7 @@ namespace HaengSungAOI_WPF
             SetupExceptionHandling();
 
             // Hiển thị Main Window
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
             mainWindow.Show();
 
             base.OnStartup(e);
@@ -100,8 +110,8 @@ namespace HaengSungAOI_WPF
         {
             try
             {
-                var globalState = _host.Services.GetRequiredService<IGlobalStateService>();
-                var dbService = _host.Services.GetRequiredService<AutoVisionDbService>();
+                var globalState = _serviceProvider.GetRequiredService<IGlobalStateService>();
+                var dbService = _serviceProvider.GetRequiredService<AutoVisionDbService>();
                 
                 globalState.MachineName = ConfigurationManager.AppSettings["Machine_Name"];
                 
@@ -138,10 +148,10 @@ namespace HaengSungAOI_WPF
         {
             try
             {
-                var globalState = _host.Services.GetRequiredService<IGlobalStateService>();
+                var globalState = _serviceProvider.GetRequiredService<IGlobalStateService>();
                 if (globalState.ActualMachineId.HasValue)
                 {
-                    var dbService = _host.Services.GetRequiredService<AutoVisionDbService>();
+                    var dbService = _serviceProvider.GetRequiredService<AutoVisionDbService>();
                     // Chạy đồng bộ vì app đang crash
                     Task.Run(async () => await dbService.UpdateVisionOperatingEndAsync(globalState.ActualMachineId.Value)).Wait(2000);
                 }
@@ -156,12 +166,11 @@ namespace HaengSungAOI_WPF
             return count <= 1;
         }
 
-        protected override async void OnExit(ExitEventArgs e)
+        protected override void OnExit(ExitEventArgs e)
         {
-            if (_host != null)
+            if (_serviceProvider != null)
             {
-                await _host.StopAsync();
-                _host.Dispose();
+                _serviceProvider.Dispose();
             }
             base.OnExit(e);
         }

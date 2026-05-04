@@ -4,11 +4,18 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using HaengSungAOI_WPF.Views;
 
 namespace HaengSungAOI_WPF.Services.UI
 {
     public class MainWindowDialogService
     {
+        private readonly IServiceProvider _serviceProvider;
+
+        public MainWindowDialogService(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
         public ushort? ShowTrayQuantityEditDialog(Window owner, int currentQty, string requiredPassword)
         {
             var dlg = new Window
@@ -243,6 +250,33 @@ namespace HaengSungAOI_WPF.Services.UI
         public bool ShowCriticalConfirmation(Window owner, string title, string message)
         {
             return MessageBox.Show(owner, message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+        }
+
+        public void ShowHistoryWindow(Window owner)
+        {
+            var win = new HistoryWindow();
+            win.Owner = owner;
+            win.ShowDialog();
+        }
+
+        public void ShowManualOperationsWindow(Window owner)
+        {
+            var win = _serviceProvider.GetService(typeof(ManualOperations)) as ManualOperations;
+            if (win != null)
+            {
+                win.Owner = owner;
+                win.Show();
+            }
+        }
+
+        public void ShowSettingsWindow(Window owner)
+        {
+            var win = _serviceProvider.GetService(typeof(SettingsWindow)) as SettingsWindow;
+            if (win != null)
+            {
+                win.Owner = owner;
+                win.ShowDialog();
+            }
         }
     }
 }

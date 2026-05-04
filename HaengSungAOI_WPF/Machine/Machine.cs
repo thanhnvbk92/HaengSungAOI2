@@ -1,6 +1,9 @@
 using FrontendUI.WPF;
 using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Models;
+using HaengSungAOI_WPF.Services;
+
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Services.Vision;
 using HaengSungAOI_WPF.Utils;
@@ -51,13 +54,9 @@ namespace HaengSungAOI_WPF.Machine
         public VmProcedure Camera_inspect5;
         public VmProcedure Camera_inspect6;
 
-        int triggerCount = 0;
         public MachineMode Mode { get; set; }
 
         // Machine variables
-        public float PCBAlign_X;
-        public float PCBAlign_Y;
-        public float PCBAlign_Angle;
         public int PCB_Quantity = 0;
         public int PCBTrayQuantity = 0;
         public int BlankTrayQuantity = 0;
@@ -82,12 +81,10 @@ namespace HaengSungAOI_WPF.Machine
         private VisionSolutionManager _visionManager;
         private string _currentVisionSolutionPath = "";
 
-        public MachineSequenceState SequenceState { get; set; } = MachineSequenceState.Idle;
 
         // Machine state
         private bool _isMachineEnabled = false;
         private bool _isInitialized = false;
-        public bool overideInspection = false;
         public bool EnableScanOut { get; set; } = true; // Enable/disable scan-out feature
         public bool IsByPass { get; set; } = false; // By Pass mode
 
@@ -117,11 +114,11 @@ namespace HaengSungAOI_WPF.Machine
         // Events
         public event Action<bool> OnMachineEnabledStateChanged;
 
-        // Error list
-        private readonly MachineErrorList _errorList;
+        // Error service
+        private readonly IErrorService _errorService;
 
         // PLC - centralized hardware communication
-        public PLCController PLC { get; private set; }
+        public IPlcService PLC { get; private set; }
 
         // Inspection History Manager for database logging
         private InspectionHistoryManager _historyManager;
@@ -130,10 +127,10 @@ namespace HaengSungAOI_WPF.Machine
 
         #region Constructor
 
-        public Machine()
+        public Machine(IPlcService plc, IErrorService errorService)
         {
-            _errorList = MachineErrorList.Instance;
-            //Logger.Info("Machine", "Machine constructor called - PLC-based communication");
+            PLC = plc;
+            _errorService = errorService;
 
             _ScanoutResonposeProcessor = new ActionBlock<ScanOutResponseData>(
                 async data => await ProcessScanOutResponseAsync(data),
@@ -206,11 +203,11 @@ namespace HaengSungAOI_WPF.Machine
             try
             {
 
-                // Initialize PLC controller first - all hardware communication goes through this
-                InitializePLCController();
-
                 // Initialize scan out
                 InitializeScanOut();
+
+                // Initialize PLC event subscriptions
+                InitializePlcEvents();
 
                 // Initialize vision system
                 _visionManager = new VisionSolutionManager();
@@ -231,13 +228,13 @@ namespace HaengSungAOI_WPF.Machine
                 //Logger.Info("Machine", "Machine initialization completed successfully (PLC-based)");
                 Logger.Info("Machine", "End initialization");
 
-                _errorList.AddError(ErrorType.Information, "Machine", "Machine initialized successfully");
+                _errorService.ReportError("Machine", "Machine initialized successfully");
             }
             catch (Exception ex)
             {
                 IsInitialized = false;
                 Logger.Error("Machine", "Failed to initialize machine", ex);
-                _errorList.AddException("Machine", "Machine initialization failed", ex);
+                _errorService.ReportError("Machine", "Machine initialization failed", ex);
                 throw;
             }
         }
@@ -253,7 +250,7 @@ namespace HaengSungAOI_WPF.Machine
                 if (_PCBModel == null)
                 {
                     Logger.Warning("Machine", "No active model found in database, creating default model");
-                    _errorList.AddError(ErrorType.Warning, "Machine", "No active model found, creating default");
+                    _errorService.ReportError(ErrorType.Warning, "Machine", "No active model found, creating default");
 
                     // Create default model as fallback
                     _PCBModel = new PCBModel
@@ -342,12 +339,12 @@ namespace HaengSungAOI_WPF.Machine
                 }
 
                 Logger.Info("Machine", $"Loaded PCB model from database: {_PCBModel.Name} (Speed: {_PCBModel.PCBInfeedPick_Speed})");
-                _errorList.AddError(ErrorType.Information, "Machine", $"Loaded model: {_PCBModel.Name}");
+                _errorService.ReportError(ErrorType.Information, "Machine", $"Loaded model: {_PCBModel.Name}");
             }
             catch (Exception ex)
             {
                 Logger.Error("Machine", "Error loading active model from database", ex);
-                _errorList.AddException("Machine", "Failed to load PCB model", ex);
+                _errorService.ReportError("Machine", "Failed to load PCB model", ex);
 
                 // Create minimal fallback model
                 _PCBModel = new PCBModel
@@ -369,7 +366,7 @@ namespace HaengSungAOI_WPF.Machine
                 if (ports.Length == 0)
                 {
                     Logger.Warning("Machine", "No serial ports found for ScanOut device");
-                    _errorList.AddError(ErrorType.Warning, "Machine", "No serial ports found for ScanOut device");
+                    _errorService.ReportError(ErrorType.Warning, "Machine", "No serial ports found for ScanOut device");
                     return;
                 }
                 ScanoutSerialPort = new SerialPort("COM7", 115200, Parity.None, 8, StopBits.One);
@@ -379,7 +376,7 @@ namespace HaengSungAOI_WPF.Machine
             catch (Exception ex)
             {
                 Logger.Error("Machine", "Failed to initialize ScanOut serial port", ex);
-                _errorList.AddException("Machine", "ScanOut initialization failed", ex);
+                _errorService.ReportError("Machine", "ScanOut initialization failed", ex);
             }
 
         }
@@ -391,13 +388,9 @@ namespace HaengSungAOI_WPF.Machine
         {
             try
             {
-                //Logger.Info("Machine", "Disposing machine resources");
-
                 if (PLC != null)
                 {
-                    PLC.DataChanged -= OnPLCDataChanged;
                     PLC.ConnectionStatusChanged -= OnPLCConnectionStatusChanged;
-                    PLC.ErrorOccurred -= OnPLCErrorOccurred;
                     PLC.Stop();
                     PLC.Disconnect();
                     PLC.Dispose();
@@ -450,7 +443,7 @@ namespace HaengSungAOI_WPF.Machine
             catch (Exception ex)
             {
                 Logger.Error("ScanOut", "Error sending scan out trigger", ex);
-                _errorList.AddException("ScanOut", "Scan out trigger failed", ex);
+                _errorService.ReportError("ScanOut", "Scan out trigger failed", ex);
                 return Task.FromResult(ScanOutResult.NG);
             }
         }
@@ -580,14 +573,6 @@ namespace HaengSungAOI_WPF.Machine
         }
 
 
-        /// <summary>
-        /// Stop all robot sequences (stub - robots removed)
-        /// </summary>
-        public void StopAllRobotSequences()
-        {
-            // TODO: Implement PLC-based sequence stopping if needed
-            Logger.Info("Machine", "StopAllRobotSequences called (stub - robots removed)");
-        }
 
         /// <summary>
         /// Update machine model (stub - simplified)
@@ -656,7 +641,7 @@ namespace HaengSungAOI_WPF.Machine
             IsMachineEnabled = false;
             Mode = MachineMode.Manual;
             Logger.Critical("Machine", "EmergencyStop called");
-            _errorList.AddError(ErrorType.Critical, "Machine", "Emergency stop activated");
+            _errorService.ReportError(ErrorType.Critical, "Machine", "Emergency stop activated");
         }
 
         /// <summary>

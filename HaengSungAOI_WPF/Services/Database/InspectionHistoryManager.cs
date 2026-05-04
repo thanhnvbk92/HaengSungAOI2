@@ -1,6 +1,7 @@
 using HaengSungAOI_WPF.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Data.SQLite;
 using System.Diagnostics.Eventing.Reader;
 using System.IO;
@@ -312,8 +313,100 @@ namespace HaengSungAOI_WPF.Services.Database
         }
 
         /// <summary>
-        /// Get inspection results with optional filtering and paging
+        /// Get inspection results with optional filtering and paging (Async)
         /// </summary>
+        public async Task<List<InspectionResult>> GetInspectionResultsAsync(DateTime? fromDate = null, DateTime? toDate = null, 
+            string result = null, string modelName = null, int limit = 1000, int offset = 0)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    var whereClauses = new List<string>();
+                    var parameters = new List<SQLiteParameter>();
+
+                    if (fromDate.HasValue)
+                    {
+                        whereClauses.Add("InspectionDateTime >= @FromDate");
+                        parameters.Add(new SQLiteParameter("@FromDate", fromDate.Value.ToString("yyyy-MM-dd HH:mm:ss")));
+                    }
+
+                    if (toDate.HasValue)
+                    {
+                        whereClauses.Add("InspectionDateTime <= @ToDate");
+                        parameters.Add(new SQLiteParameter("@ToDate", toDate.Value.ToString("yyyy-MM-dd HH:mm:ss")));
+                    }
+
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        whereClauses.Add("Result = @Result");
+                        parameters.Add(new SQLiteParameter("@Result", result));
+                    }
+
+                    if (!string.IsNullOrEmpty(modelName))
+                    {
+                        whereClauses.Add("ModelName = @ModelName");
+                        parameters.Add(new SQLiteParameter("@ModelName", modelName));
+                    }
+
+                    string whereClause = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+
+                    string sql = $@"
+                        SELECT * FROM InspectionResults 
+                        {whereClause}
+                        ORDER BY InspectionDateTime DESC 
+                        LIMIT @Limit OFFSET @Offset";
+
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.Add(param);
+                        }
+                        command.Parameters.AddWithValue("@Limit", limit);
+                        command.Parameters.AddWithValue("@Offset", offset);
+
+                        var results = new List<InspectionResult>();
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var inspectionResult = new InspectionResult
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    STT = Convert.ToInt32(reader["STT"]),
+                                    PCBCode = reader["PCBCode"].ToString(),
+                                    ModelName = reader["ModelName"] == DBNull.Value ? "" : reader["ModelName"].ToString(),
+                                    InspectionDateTime = DateTime.Parse(reader["InspectionDateTime"].ToString()),
+                                    Result = reader["Result"].ToString(),
+                                    TotalDefects = Convert.ToInt32(reader["TotalDefects"]),
+                                    TotalOK = Convert.ToInt32(reader["TotalOK"]),
+                                    TotalNG = Convert.ToInt32(reader["TotalNG"]),
+                                    OperatorName = reader["OperatorName"] == DBNull.Value ? "" : reader["OperatorName"].ToString(),
+                                    InspectionTime = Convert.ToDouble(reader["InspectionTime"]),
+                                    ImagePath = reader["ImagePath"] == DBNull.Value ? "" : reader["ImagePath"].ToString(),
+                                    ReportPath = reader["ReportPath"] == DBNull.Value ? "" : reader["ReportPath"].ToString()
+                                };
+
+                                // Load defects for this inspection result
+                                inspectionResult.Defects = await GetDefectsForInspectionAsync(inspectionResult.Id);
+
+                                results.Add(inspectionResult);
+                            }
+                        }
+
+                        return results;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to get inspection results async: {ex.Message}", ex);
+            }
+        }
+
         public List<InspectionResult> GetInspectionResults(DateTime? fromDate = null, DateTime? toDate = null, 
             string result = null, string modelName = null, int limit = 1000, int offset = 0)
         {
@@ -407,8 +500,54 @@ namespace HaengSungAOI_WPF.Services.Database
         }
 
         /// <summary>
-        /// Get defects for a specific inspection result
+        /// Get defects for a specific inspection result (Async)
         /// </summary>
+        public async Task<List<DefectResult>> GetDefectsForInspectionAsync(int inspectionResultId)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string sql = "SELECT * FROM DefectResults WHERE InspectionResultId = @InspectionResultId ORDER BY Id";
+
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@InspectionResultId", inspectionResultId);
+
+                        var defects = new List<DefectResult>();
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var defect = new DefectResult
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    InspectionResultId = Convert.ToInt32(reader["InspectionResultId"]),
+                                    Camera = reader["Camera"] == DBNull.Value ? "" : reader["Camera"].ToString(),
+                                    ErrorType = reader["ErrorType"] == DBNull.Value ? "" : reader["ErrorType"].ToString(),
+                                    Coordinates = reader["Coordinates"] == DBNull.Value ? "" : reader["Coordinates"].ToString(),
+                                    ImagePath = reader["ImagePath"] == DBNull.Value ? "" : reader["ImagePath"].ToString(),
+                                    Status = reader["Status"] == DBNull.Value ? "" : reader["Status"].ToString(),
+                                    Confidence = Convert.ToDouble(reader["Confidence"]),
+                                    Description = reader["Description"] == DBNull.Value ? "" : reader["Description"].ToString()
+                                };
+
+                                defects.Add(defect);
+                            }
+                        }
+
+                        return defects;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to get defects for inspection async: {ex.Message}", ex);
+            }
+        }
+
         public List<DefectResult> GetDefectsForInspection(int inspectionResultId)
         {
             try
@@ -456,8 +595,80 @@ namespace HaengSungAOI_WPF.Services.Database
         }
 
         /// <summary>
-        /// Get inspection statistics for a date range
+        /// Get inspection statistics for a date range (Async)
         /// </summary>
+        public async Task<InspectionStatistics> GetStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null, string modelName = null)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    var whereClauses = new List<string>();
+                    var parameters = new List<SQLiteParameter>();
+
+                    if (fromDate.HasValue)
+                    {
+                        whereClauses.Add("InspectionDateTime >= @FromDate");
+                        parameters.Add(new SQLiteParameter("@FromDate", fromDate.Value.ToString("yyyy-MM-dd HH:mm:ss")));
+                    }
+
+                    if (toDate.HasValue)
+                    {
+                        whereClauses.Add("InspectionDateTime <= @ToDate");
+                        parameters.Add(new SQLiteParameter("@ToDate", toDate.Value.ToString("yyyy-MM-dd HH:mm:ss")));
+                    }
+
+                    if (!string.IsNullOrEmpty(modelName))
+                    {
+                        whereClauses.Add("ModelName = @ModelName");
+                        parameters.Add(new SQLiteParameter("@ModelName", modelName));
+                    }
+
+                    string whereClause = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+
+                    string sql = $@"
+                        SELECT 
+                            COUNT(*) as TotalInspections,
+                            SUM(CASE WHEN Result = 'PASS' THEN 1 ELSE 0 END) as PassCount,
+                            SUM(CASE WHEN Result = 'FAIL' THEN 1 ELSE 0 END) as FailCount,
+                            SUM(TotalDefects) as TotalDefectsCount,
+                            AVG(InspectionTime) as AverageInspectionTime
+                        FROM InspectionResults {whereClause}";
+
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.Add(param);
+                        }
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return new InspectionStatistics
+                                {
+                                    TotalInspections = reader["TotalInspections"] == DBNull.Value ? 0 : Convert.ToInt32(reader["TotalInspections"]),
+                                    PassCount = reader["PassCount"] == DBNull.Value ? 0 : Convert.ToInt32(reader["PassCount"]),
+                                    FailCount = reader["FailCount"] == DBNull.Value ? 0 : Convert.ToInt32(reader["FailCount"]),
+                                    TotalDefects = reader["TotalDefectsCount"] == DBNull.Value ? 0 : Convert.ToInt32(reader["TotalDefectsCount"]),
+                                    AverageInspectionTime = reader["AverageInspectionTime"] == DBNull.Value ? 0.0 : Convert.ToDouble(reader["AverageInspectionTime"])
+                                };
+                            }
+                        }
+                    }
+                }
+
+                return new InspectionStatistics();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to get inspection statistics async: {ex.Message}", ex);
+            }
+        }
+
         public InspectionStatistics GetStatistics(DateTime? fromDate = null, DateTime? toDate = null, string modelName = null)
         {
             try
@@ -528,6 +739,14 @@ namespace HaengSungAOI_WPF.Services.Database
             {
                 throw new InvalidOperationException($"Failed to get inspection statistics: {ex.Message}", ex);
             }
+        }
+
+        /// <summary>
+        /// Delete old inspection records (older than specified days) (Async)
+        /// </summary>
+        public async Task<int> DeleteOldRecordsAsync(int daysToKeep)
+        {
+            return await Task.Run(() => DeleteOldRecords(daysToKeep));
         }
 
         /// <summary>
@@ -621,8 +840,37 @@ namespace HaengSungAOI_WPF.Services.Database
         }
 
         /// <summary>
-        /// Get distinct model names from inspection history
+        /// Get distinct model names from inspection history (Async)
         /// </summary>
+        public async Task<List<string>> GetDistinctModelNamesAsync()
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string sql = "SELECT DISTINCT ModelName FROM InspectionResults WHERE ModelName IS NOT NULL AND ModelName != '' ORDER BY ModelName";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        var modelNames = new List<string>();
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                modelNames.Add(reader["ModelName"].ToString());
+                            }
+                        }
+                        return modelNames;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to get distinct model names async: {ex.Message}", ex);
+            }
+        }
+
         public List<string> GetDistinctModelNames()
         {
             try
@@ -923,7 +1171,10 @@ namespace HaengSungAOI_WPF.Services.Database
             return false;
         }
     }
+}
 
+namespace HaengSungAOI_WPF.Models
+{
     /// <summary>
     /// Statistics summary for inspection results
     /// </summary>

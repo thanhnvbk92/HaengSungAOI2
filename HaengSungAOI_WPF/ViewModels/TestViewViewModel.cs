@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
@@ -8,17 +8,23 @@ using System.Threading.Tasks;
 
 namespace HaengSungAOI_WPF.ViewModels
 {
-    public partial class TestViewViewModel: ObservableObject
+    public partial class TestViewViewModel : ObservableObject
     {
-        [ObservableProperty]
-        private string name;
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set => SetProperty(ref _name, value);
+        }
 
         public TestViewViewModel()
         {
             Name = "Hello WPF";
+            SayHelloCommand = new RelayCommand(SayHello);
         }
 
-        [RelayCommand]
+        public IRelayCommand SayHelloCommand { get; }
+
         private void SayHello()
         {
             Name = $"Xin chào {Name}";

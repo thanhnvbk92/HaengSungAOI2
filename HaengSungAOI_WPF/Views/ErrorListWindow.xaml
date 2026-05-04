@@ -1,9 +1,10 @@
-<Window x:Class="HaengSungAOI_WPF.ErrorListWindow"
+<Window x:Class="HaengSungAOI_WPF.Views.ErrorListWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HaengSungAOI_WPF"
+        xmlns:views="clr-namespace:HaengSungAOI_WPF.Views"
         mc:Ignorable="d"
         Title="Machine Error List" Height="600" Width="900" 
         Background="#1e1e2f"
@@ -11,9 +12,9 @@
     
     <Window.Resources>
         <!-- Boolean to Acknowledged Text Converter -->
-        <local:BoolToAcknowledgedConverter x:Key="BoolToAcknowledgedConverter"/>
+        <views:BoolToAcknowledgedConverter x:Key="BoolToAcknowledgedConverter"/>
         <!-- Boolean to Color Brush Converter -->
-        <local:BoolToAcknowledgedBrushConverter x:Key="BoolToAcknowledgedBrushConverter"/>
+        <views:BoolToAcknowledgedBrushConverter x:Key="BoolToAcknowledgedBrushConverter"/>
     </Window.Resources>
     
     <Grid Margin="10">

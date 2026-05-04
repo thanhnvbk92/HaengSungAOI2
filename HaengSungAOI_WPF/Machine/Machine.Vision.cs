@@ -100,21 +100,6 @@ namespace HaengSungAOI_WPF.Machine
                 FrontendUI.WPF.Controls.Root rootControl2 = rootControl.Content as FrontendUI.WPF.Controls.Root;
                 UIElementCollection rootControl2Children = rootControl2.Children;
 
-                //imageAlign = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Align"));
-                //imageInspect1 = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Inspect1"));
-                //imageInspect2 = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Inspect2"));
-                //imageInspect3 = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Inspect3"));
-                //imageInspect4 = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Inspect4"));
-                //imageInspect5 = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Inspect5"));
-                //imageInspect6 = rootControl2Children.OfType<FrontendUI.WPF.Controls.ImageControl>().FirstOrDefault(c => c.ImageSourceInfo.Contains("Inspect6"));
-
-                //Camera_align.EnableResultCallback();
-                //Camera_inspect1.EnableResultCallback();
-                //Camera_inspect2.EnableResultCallback();
-                //Camera_inspect3.EnableResultCallback();
-                //Camera_inspect4.EnableResultCallback();
-                //Camera_inspect5.EnableResultCallback();
-                //Camera_inspect6.EnableResultCallback();
 
                 Console.WriteLine("Vision procedures initialization completed");
             }
@@ -145,49 +130,6 @@ namespace HaengSungAOI_WPF.Machine
             }
         }
 
-        //public void saveImage(string folderPath, string procedure)
-        //{
-        //    try
-        //    {
-        //        if (!Directory.Exists(folderPath))
-        //            Directory.CreateDirectory(folderPath);
-
-        //        switch (procedure)
-        //        {
-        //            case "Align":
-        //                SaveImageWithShapes(folderPath, "Align", imageAlign);
-        //                break;
-        //            case "1_r":
-        //            case "Inspect1":
-        //                SaveImageWithShapes(folderPath, "1", imageInspect1);
-        //                break;
-        //            case "2_r":
-        //            case "Inspect2":
-        //                SaveImageWithShapes(folderPath, "2", imageInspect2);
-        //                break;
-        //            case "3_r":
-        //            case "Inspect3":
-        //                SaveImageWithShapes(folderPath, "3", imageInspect3);
-        //                break;
-        //            case "4_r":
-        //            case "Inspect4":
-        //                SaveImageWithShapes(folderPath, "4", imageInspect4);
-        //                break;
-        //            case "5_r":
-        //            case "Inspect5":
-        //                SaveImageWithShapes(folderPath, "5", imageInspect5);
-        //                break;
-        //            case "6_r":
-        //            case "Inspect6":
-        //                SaveImageWithShapes(folderPath, "6", imageInspect6);
-        //                break;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logger.Error("Machine", $"Error saving images: {ex.Message}");
-        //    }
-        //}
 
         private void SaveImageWithShapes(string folderPath, string name, FrontendUI.WPF.Controls.ImageControl imageControl)
         {
@@ -233,9 +175,5 @@ namespace HaengSungAOI_WPF.Machine
             }
         }
 
-        internal void DisableAllMotors()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

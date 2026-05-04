@@ -4,10 +4,11 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using HaengSungAOI_WPF.Models;
 
 namespace HaengSungAOI_WPF.Services.Database
 {
-    public class ModelDatabaseManager
+    public class ModelDatabaseManager : IModelDatabaseManager
     {
         private const string DatabaseFileName = "Models.db";
         private readonly string _connectionString;
@@ -211,7 +212,7 @@ namespace HaengSungAOI_WPF.Services.Database
                         Description = "Default PCB model configuration",
                         IsActive = true
                     };
-                    SaveModel(defaultModel, connection);
+                    SaveModelInternal(defaultModel, connection);
                 }
             }
         }
@@ -265,7 +266,12 @@ namespace HaengSungAOI_WPF.Services.Database
             return null;
         }
 
-        public void SaveModel(Models.PCBModel model, SQLiteConnection connection = null)
+        public void SaveModel(PCBModel model)
+        {
+            SaveModelInternal(model, null);
+        }
+
+        private void SaveModelInternal(PCBModel model, SQLiteConnection connection = null)
         {
             bool shouldCloseConnection = connection == null;
             if (connection == null)

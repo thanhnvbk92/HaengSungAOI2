@@ -7,6 +7,7 @@
     <Application.Resources>
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <conv:BooleanToBrushConverter x:Key="LampBrushConverter" TrueBrush="Lime" FalseBrush="Gray"/>
+        <conv:BooleanToBrushConverter x:Key="BoolToLampBrushConverter" TrueBrush="#00FF00" FalseBrush="#232336"/>
         <!-- DataGrid Header Style for Dark Background -->
         <Style TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="#232336"/>

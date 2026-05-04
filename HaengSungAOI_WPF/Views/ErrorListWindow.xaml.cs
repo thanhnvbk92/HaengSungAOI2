@@ -1,4 +1,5 @@
 using HaengSungAOI_WPF.Machine;
+using HaengSungAOI_WPF.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace HaengSungAOI_WPF
+namespace HaengSungAOI_WPF.Views
 {
     /// <summary>
     /// Interaction logic for ErrorListWindow.xaml

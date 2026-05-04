@@ -10,11 +10,11 @@ none
 false
 DEBUG;TRACE
 F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\App.xaml
-7182748359
-1151696340
-64-847710037
-244-128716083
-Views\ErrorListWindow.xaml;Views\HistoryWindow.xaml;Views\MainWindow.xaml;Views\ManualOperations.xaml;Views\ModelConfig.xaml;Views\RobotJogWindow.xaml;Views\SettingsWindow.xaml;
+91879413834
 
-True
+78-846297961
+61701733291
+Views\MainWindow.xaml;Views\ManualOperations.xaml;Views\HistoryWindow.xaml;Views\ModelConfig.xaml;Views\ErrorListWindow.xaml;Views\RobotJogWindow.xaml;Views\SettingsWindow.xaml;Views\MainView.xaml;Views\TestView.xaml;
+
+False
 

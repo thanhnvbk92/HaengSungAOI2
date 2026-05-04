@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using HaengSungAOI_WPF.ViewModels;
 using HaengSungAOI_WPF.Services.Machine;
 
-namespace HaengSungAOI_WPF
+namespace HaengSungAOI_WPF.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -43,5 +45,66 @@ namespace HaengSungAOI_WPF
                 _machineService.Initialize();
             }
         }
+
+        /// <summary>
+        /// Cập nhật giá trị EBR từ backend (được gọi từ logic Machine.PLC cũ)
+        /// </summary>
+        public void SetEbrFromBackend(string ebr)
+        {
+            if (this.DataContext is MainViewModel vm)
+            {
+                vm.CurrentEbrValue = ebr;
+            }
+        }
+
+        #region Language Flag Event Handlers
+
+        private void FlagVN_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: Chuyển ngôn ngữ sang Tiếng Việt
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Language changed to Vietnamese");
+        }
+
+        private void FlagKR_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: Chuyển ngôn ngữ sang Tiếng Hàn
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Language changed to Korean");
+        }
+
+        private void FlagEN_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: Chuyển ngôn ngữ sang Tiếng Anh
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Language changed to English");
+        }
+
+        #endregion
+
+        #region Image Event Handlers
+
+        private void ViewImage_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is string imagePath)
+            {
+                if (!string.IsNullOrEmpty(imagePath) && File.Exists(imagePath))
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(imagePath) { UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Cannot open image: {ex.Message}", "Error",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Image file not found.", "Not Found",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
+
+        #endregion
     }
 }

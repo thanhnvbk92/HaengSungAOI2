@@ -1,4 +1,5 @@
-using HaengSungAOI_WPF.Machine.PLC.PLC;
+using HaengSungAOI_WPF.Machine.PLC;
+using HaengSungAOI_WPF.Services.Machine;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -47,9 +48,9 @@ namespace HaengSungAOI_WPF.Services.UI
             _hmiLamps["HMI_Counter_Reset_PB"] = FindLampInButton(btnHMICounterReset);
         }
 
-        public void UpdateLamps(PLCController plc)
+        public void UpdateLamps(IPlcService plcService)
         {
-            if (plc == null || !plc.IsConnected || _hmiLamps.Count == 0) return;
+            if (plcService == null || !plcService.IsConnected || _hmiLamps.Count == 0) return;
 
             foreach (var kvp in _hmiLamps)
             {
@@ -57,12 +58,8 @@ namespace HaengSungAOI_WPF.Services.UI
                 if (lamp == null) continue;
 
                 string lampTag = kvp.Key.Replace("HMI_", "HMI_Lamp_");
-                var dataPoint = plc.GetDataPoint(lampTag);
-                if (dataPoint == null) continue;
-
-                bool isOn = false;
-                if (dataPoint.Value is ushort regValue) isOn = regValue != 0;
-                else if (dataPoint.Value is bool boolValue) isOn = boolValue;
+                ushort regValue = plcService.GetUInt16Value(lampTag);
+                bool isOn = regValue != 0;
 
                 if (!_lastLampStates.TryGetValue(lampTag, out bool lastState) || lastState != isOn)
                 {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Timers;
+using HaengSungAOI_WPF.Services.Machine;
+
 
 namespace HaengSungAOI_WPF.Machine.PLC
 {
@@ -480,11 +482,11 @@ Axis = axis;
 
     /// <summary>
     /// Monitors all servo axes continuously and provides status updates
- /// Integrates with PLCController for data reading
+    /// Integrates with IPlcService for data reading
     /// </summary>
     public class ServoMonitor : IDisposable
     {
-        private readonly PLCController _plc;
+        private readonly IPlcService _plcService;
         private readonly Dictionary<ServoAxis, ServoAxisStatus> _axisStatuses;
         private readonly Timer _updateTimer;
         private bool _isMonitoring;
@@ -520,55 +522,51 @@ Axis = axis;
         /// </summary>
         public bool IsMonitoring => _isMonitoring;
 
-/// <summary>
-        /// Create a new ServoMonitor with default settings (no PLC connection)
-     /// Use Connect() to establish connection later
-    /// </summary>
+        /// <summary>
+        /// Create a new ServoMonitor with default settings
+        /// </summary>
         public ServoMonitor()
         {
-   _plc = null;
- _axisStatuses = new Dictionary<ServoAxis, ServoAxisStatus>();
+            _plcService = App.PlcService;
+            _axisStatuses = new Dictionary<ServoAxis, ServoAxisStatus>();
 
             // Initialize status for all axes
- foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
+            foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
             {
-  var status = new ServoAxisStatus(axis);
-      status.PropertyChanged += OnAxisPropertyChanged;
+                var status = new ServoAxisStatus(axis);
+                status.PropertyChanged += OnAxisPropertyChanged;
                 _axisStatuses[axis] = status;
             }
 
-          // Setup update timer (100ms default)
-    _updateTimer = new Timer(100);
+            // Setup update timer (100ms default)
+            _updateTimer = new Timer(100);
             _updateTimer.Elapsed += OnUpdateTimerElapsed;
- _updateTimer.AutoReset = true;
+            _updateTimer.AutoReset = true;
         }
 
         /// <summary>
         /// Create a new ServoMonitor
         /// </summary>
-        /// <param name="plc">PLCController for communication</param>
+        /// <param name="plcService">IPlcService for communication</param>
         /// <param name="updateIntervalMs">Update interval in milliseconds (default 100ms)</param>
-        public ServoMonitor(PLCController plc, int updateIntervalMs = 100)
-{
-            _plc = plc ?? throw new ArgumentNullException(nameof(plc));
-    _axisStatuses = new Dictionary<ServoAxis, ServoAxisStatus>();
+        public ServoMonitor(IPlcService plcService, int updateIntervalMs = 100)
+        {
+            _plcService = plcService ?? throw new ArgumentNullException(nameof(plcService));
+            _axisStatuses = new Dictionary<ServoAxis, ServoAxisStatus>();
 
- // Initialize status for all axes
-   foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
-          {
-   var status = new ServoAxisStatus(axis);
-     status.PropertyChanged += OnAxisPropertyChanged;
-        _axisStatuses[axis] = status;
-       }
+            // Initialize status for all axes
+            foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
+            {
+                var status = new ServoAxisStatus(axis);
+                status.PropertyChanged += OnAxisPropertyChanged;
+                _axisStatuses[axis] = status;
+            }
 
-      // Setup update timer
-    _updateTimer = new Timer(updateIntervalMs);
- _updateTimer.Elapsed += OnUpdateTimerElapsed;
-       _updateTimer.AutoReset = true;
-
-            // Subscribe to PLC data changes
-     _plc.DataChanged += OnPLCDataChanged;
-   }
+            // Setup update timer
+            _updateTimer = new Timer(updateIntervalMs);
+            _updateTimer.Elapsed += OnUpdateTimerElapsed;
+            _updateTimer.AutoReset = true;
+        }
 
       /// <summary>
         /// Start continuous monitoring
@@ -702,150 +700,79 @@ Axis = axis;
     }
         }
 
-    private void OnPLCDataChanged(object sender, PLCDataChangedEventArgs e)
+        private void OnPLCDataChanged(object sender, EventArgs e)
         {
-            // Check if the changed data point is a servo parameter
-      foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
-   {
-                string axisName = ServoAddressCalculator.GetAxisDisplayName(axis);
-          if (e.DataPointName.StartsWith(axisName))
-       {
-    UpdateAxisFromPLC(axis);
-        break;
-        }
-            }
+            // Note: HmiPlcService handles polling internally. 
+            // We can either respond to specific tag changes if IPlcService exposes them,
+            // or just let ForceUpdate handle it via the timer.
         }
 
         private void UpdateAxisFromPLC(ServoAxis axis)
-  {
-      // Skip if no PLC connection
-if (_plc == null || !_plc.IsConnected)
-         return;
+        {
+            // Skip if no PLC connection
+            if (_plcService == null || !_plcService.IsConnected)
+                return;
 
             if (!_axisStatuses.TryGetValue(axis, out var status))
-  return;
+                return;
 
-   string axisName = ServoAddressCalculator.GetAxisDisplayName(axis);
+            string axisName = ServoAddressCalculator.GetAxisDisplayName(axis);
 
-   try
-    {
-     // Read current position
-   var posData = _plc.GetDataPoint($"{axisName}_CurrentPosition");
-        if (posData != null && posData.Value != null)
-     {
-  double oldPos = status.CurrentPosition;
-   status.CurrentPosition = ConvertToDouble(posData.Value);
-   
-     // Log position reading for debugging
-    if (Math.Abs(status.CurrentPosition - oldPos) > 0.001 || oldPos == 0)
-        {
-   Utils.Logger.Debug("ServoMonitor", 
-    $"{axisName} Position: {status.CurrentPosition:F3} (raw type: {posData.Value.GetType().Name}, " +
-   $"raw value: {FormatRawValue(posData.Value)})");
- }
- }
-     else
-{
-   Utils.Logger.Debug("ServoMonitor", $"{axisName}_CurrentPosition: DataPoint is null or has no value");
-    }
-
+            try
+            {
+                // Read current position
+                double oldPos = status.CurrentPosition;
+                status.CurrentPosition = _plcService.GetDoubleValue($"{axisName}_CurrentPosition");
+                
                 // Read current speed
-   var speedData = _plc.GetDataPoint($"{axisName}_CurrentSpeed");
-  if (speedData != null && speedData.Value != null)
-       {
-         double oldSpeed = status.CurrentSpeed;
-    status.CurrentSpeed = ConvertToDouble(speedData.Value);
-    
-      // Log speed reading if changed significantly
-      if (Math.Abs(status.CurrentSpeed - oldSpeed) > 0.1)
-        {
-       Utils.Logger.Debug("ServoMonitor", 
-   $"{axisName} Speed: {status.CurrentSpeed:F1} (raw type: {speedData.Value.GetType().Name})");
-        }
-  }
+                status.CurrentSpeed = _plcService.GetDoubleValue($"{axisName}_CurrentSpeed");
+                
+                // Read error code
+                double oldError = status.ErrorCode;
+                double newError = _plcService.GetDoubleValue($"{axisName}_ErrorCode");
+                status.ErrorCode = newError;
 
-     // Read error code
-  var errorData = _plc.GetDataPoint($"{axisName}_ErrorCode");
-                if (errorData != null && errorData.Value != null)
-         {
-       double oldError = status.ErrorCode;
-         double newError = ConvertToDouble(errorData.Value);
-    status.ErrorCode = newError;
-
-        // Log error code changes
-       if (oldError != newError)
-        {
- Utils.Logger.Debug("ServoMonitor", 
-      $"{axisName} ErrorCode changed: {oldError} -> {newError}");
+                // Detect error state changes
+                if (oldError == 0 && newError != 0)
+                {
+                    ErrorDetected?.Invoke(this, new ServoErrorEventArgs(axis, newError));
+                }
+                else if (oldError != 0 && newError == 0)
+                {
+                    ErrorCleared?.Invoke(this, new ServoErrorEventArgs(axis, 0));
                 }
 
-            // Detect error state changes
- if (oldError == 0 && newError != 0)
-           {
-    ErrorDetected?.Invoke(this, new ServoErrorEventArgs(axis, newError));
-    }
-        else if (oldError != 0 && newError == 0)
-              {
-             ErrorCleared?.Invoke(this, new ServoErrorEventArgs(axis, 0));
-          }
-      }
+                // Read operation status
+                status.OperationStatus = _plcService.GetDoubleValue($"{axisName}_OperationStatus");
 
-       // Read operation status
-              var statusData = _plc.GetDataPoint($"{axisName}_OperationStatus");
-      if (statusData != null && statusData.Value != null)
-      {
-         status.OperationStatus = ConvertToDouble(statusData.Value);
-        }
-
-       // Read ORG found
-          var orgData = _plc.GetDataPoint($"{axisName}_ORGFound");
-        if (orgData != null && orgData.Value != null)
-       {
-    status.ORGFound = ConvertToBool(orgData.Value);
-         }
+                // Read ORG found
+                status.ORGFound = _plcService.GetUInt16Value($"{axisName}_ORGFound") != 0;
 
                 // Read move completed
-                var moveData = _plc.GetDataPoint($"{axisName}_MoveCompleted");
-         if (moveData != null && moveData.Value != null)
-    {
-     bool oldMoveCompleted = status.MoveCompleted;
-    bool newMoveCompleted = ConvertToBool(moveData.Value);
-         status.MoveCompleted = newMoveCompleted;
+                bool oldMoveCompleted = status.MoveCompleted;
+                bool newMoveCompleted = _plcService.GetUInt16Value($"{axisName}_MoveCompleted") != 0;
+                status.MoveCompleted = newMoveCompleted;
 
-                  // Detect move completion
-           if (!oldMoveCompleted && newMoveCompleted)
-    {
-    Utils.Logger.Debug("ServoMonitor", $"{axisName} Move completed");
-   MoveCompleted?.Invoke(this, axis);
-         }
+                // Detect move completion
+                if (!oldMoveCompleted && newMoveCompleted)
+                {
+                    MoveCompleted?.Invoke(this, axis);
                 }
 
                 // Read target position
-        var targetPosData = _plc.GetDataPoint($"{axisName}_TargetPosition");
-    if (targetPosData != null && targetPosData.Value != null)
-       {
-          status.TargetPosition = ConvertToDouble(targetPosData.Value);
-    }
+                status.TargetPosition = _plcService.GetDoubleValue($"{axisName}_TargetPosition");
 
- // Read target speed
-       var targetSpeedData = _plc.GetDataPoint($"{axisName}_TargetSpeed");
-      if (targetSpeedData != null && targetSpeedData.Value != null)
-    {
-    status.TargetSpeed = ConvertToDouble(targetSpeedData.Value);
-    }
+                // Read target speed
+                status.TargetSpeed = _plcService.GetDoubleValue($"{axisName}_TargetSpeed");
 
-       // Read current point
-var pointData = _plc.GetDataPoint($"{axisName}_CurrentPoint");
-  if (pointData != null && pointData.Value != null)
-           {
-    status.CurrentPoint = ConvertToInt(pointData.Value);
-              }
+                // Read current point
+                status.CurrentPoint = _plcService.GetUInt16Value($"{axisName}_CurrentPoint");
 
- status.LastUpdated = DateTime.Now;
-   }
+                status.LastUpdated = DateTime.Now;
+            }
             catch (Exception ex)
-      {
- Utils.Logger.Error("ServoMonitor", $"Error updating axis {axisName}: {ex.Message}", ex);
+            {
+                Utils.Logger.Error("ServoMonitor", $"Error updating axis {axisName}: {ex.Message}", ex);
             }
         }
 
@@ -872,110 +799,6 @@ var pointData = _plc.GetDataPoint($"{axisName}_CurrentPoint");
             }
 
             return $"{value.GetType().Name}: {value}";
-        }
-
-        private double ConvertToDouble(object value)
-      {
-  if (value == null) return 0;
-
-// Handle register array (LREAL stored as 4 ushort registers)
-            if (value is ushort[] registers)
-        {
-     if (registers.Length >= 4)
-             {
-          // Convert 4 registers to double (LREAL)
-   byte[] bytes = new byte[8];
-  Buffer.BlockCopy(registers, 0, bytes, 0, 8);
- return BitConverter.ToDouble(bytes, 0);
-    }
-            else if (registers.Length >= 2)
-   {
-        // Convert 2 registers to float (REAL) or int32
-              byte[] bytes = new byte[4];
-     Buffer.BlockCopy(registers, 0, bytes, 0, 4);
-                    return BitConverter.ToSingle(bytes, 0);
-            }
-     else if (registers.Length == 1)
-     {
-       // Single register - return as is
-        return registers[0];
-           }
-      return 0;
-   }
-
-            // Handle single ushort
-        if (value is ushort singleReg)
-            {
-         return singleReg;
-            }
-
-            // Handle other numeric types
-            if (value is IConvertible)
-            {
-    return Convert.ToDouble(value);
-       }
-
-            return 0;
-}
-
-     private bool ConvertToBool(object value)
-        {
-          if (value == null) return false;
-
-            // Handle register array
-            if (value is ushort[] registers && registers.Length > 0)
-            {
-    return registers[0] != 0;
-         }
-
-      // Handle single ushort
-          if (value is ushort singleReg)
-     {
-    return singleReg != 0;
-         }
-
-       // Handle other types
-          if (value is bool b)
- {
-    return b;
-  }
-
-            if (value is IConvertible)
-{
-     return Convert.ToBoolean(value);
-     }
-
-            return false;
-        }
-
-        private int ConvertToInt(object value)
-        {
-   if (value == null) return 0;
-
-// Handle register array
-            if (value is ushort[] registers && registers.Length > 0)
-            {
-    if (registers.Length >= 2)
-                {
-         // Two registers for INT32
-      return (int)(registers[0] | (registers[1] << 16));
-      }
-       return registers[0];
-            }
-
-        // Handle single ushort
-   if (value is ushort singleReg)
-            {
-   return singleReg;
-      }
-
-   // Handle other types
- if (value is IConvertible)
-            {
-          return Convert.ToInt32(value);
-            }
-
-        return 0;
         }
 
         private void OnAxisPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -1089,17 +912,15 @@ var sb = new System.Text.StringBuilder();
   }
 
         /// <summary>
-        /// Connect to PLC and start monitoring (convenience method for simpler usage)
+        /// Connect to PLC and start monitoring
         /// </summary>
-   public void Connect()
+        public void Connect()
         {
-   // The PLCController is already connected when passed to constructor
-            // This method exists for API compatibility
-            if (_plc != null && _plc.IsConnected)
-     {
-     StartMonitoring();
-     }
-     }
+            if (_plcService != null && _plcService.IsConnected)
+            {
+                StartMonitoring();
+            }
+        }
 
         public void Dispose()
         {
@@ -1108,11 +929,6 @@ var sb = new System.Text.StringBuilder();
 
             StopMonitoring();
      _updateTimer?.Dispose();
-
- if (_plc != null)
-            {
-      _plc.DataChanged -= OnPLCDataChanged;
-          }
 
     foreach (var status in _axisStatuses.Values)
          {

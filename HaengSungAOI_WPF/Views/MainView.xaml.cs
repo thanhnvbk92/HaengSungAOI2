@@ -1,4 +1,4 @@
-﻿using HaengSungAOI_WPF.ViewModels;
+using HaengSungAOI_WPF.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +19,7 @@ namespace HaengSungAOI_WPF.Views
     /// <summary>
     /// Interaction logic for MainView.xaml
     /// </summary>
-    public partial class MainView : Page
+    public partial class MainView : UserControl
     {
         public MainView()
         {

@@ -1,0 +1,504 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <RestoreProjectStyle>PackagesConfig</RestoreProjectStyle>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <Import Project="..\packages\EntityFramework.6.4.4\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E5E7E69D-63B0-49EE-B41E-200FD4638918}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>HaengSungAOI_WPF</RootNamespace>
+    <AssemblyName>HaengSungAOI_WPF</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <LangVersion>10.0</LangVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Loc.cs" />
+    <Compile Include="Services\Database\AxisMapping.cs" />
+    <Compile Include="Services\Database\InspectionHistoryManager.cs" />
+    <Compile Include="Services\Database\InspectionResultRecorder.cs" />
+    <Compile Include="Services\Database\IModelDatabaseManager.cs" />
+    <Compile Include="Services\Database\ModelDatabaseManager.cs" />
+    <Compile Include="Services\Database\SoftLimit.cs" />
+    <Compile Include="Services\Vision\VisionSolutionManager.cs" />
+    <Compile Include="Models\InspectionResult.cs" />
+    <Compile Include="Models\IoConfig.cs" />
+    <Compile Include="Models\PCBModel.cs" />
+    <Compile Include="Models\RobotPositions.cs" />
+    <Compile Include="Models\ServoParameterRowData.cs" />
+    <Compile Include="Models\TbAutoVisionResult.cs" />
+    <Compile Include="Models\TbAutoVisionScanout.cs" />
+    <Compile Include="ViewModels\AppConfig.cs" />
+    <Compile Include="ViewModels\HmiViewModel.cs" />
+    <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\ManualOperationsViewModel.cs" />
+    <Compile Include="ViewModels\ModelConfigViewModel.cs" />
+    <Compile Include="ViewModels\HistoryViewModel.cs" />
+    <Compile Include="ViewModels\RobotJogViewModel.cs" />
+    <Compile Include="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="ViewModels\TestViewViewModel.cs" />
+    <Compile Include="Services\UI\MainWindowDialogService.cs" />
+    <Compile Include="Services\UI\MainWindowHmiService.cs" />
+    <Compile Include="Services\UI\MainWindowLifecycleService.cs" />
+    <Compile Include="Services\UI\MainWindowMachineUiService.cs" />
+    <Compile Include="Services\UI\IImageDisplayService.cs" />
+    <Compile Include="Services\Machine\IMachineService.cs" />
+    <Compile Include="Services\Machine\MachineService.cs" />
+    <Compile Include="Services\Machine\IMachineHmiService.cs" />
+    <Compile Include="Services\Machine\MachineHmiService.cs" />
+    <Compile Include="Services\Machine\IPlcService.cs" />
+    <Compile Include="Services\Machine\HmiPlcService.cs" />
+    <Compile Include="Services\Machine\HmiSimulatorService.cs" />
+    <Compile Include="Services\Machine\IHmiSimulatorService.cs" />
+    <Compile Include="Services\Machine\IIoConfigService.cs" />
+    <Compile Include="Services\Machine\IoConfigService.cs" />
+    <Compile Include="Services\Machine\IScanOutService.cs" />
+    <Compile Include="Services\Machine\ScanOutService.cs" />
+    <Compile Include="Services\Vision\IVisionService.cs" />
+    <Compile Include="Services\Vision\VisionService.cs" />
+    <Compile Include="Services\ErrorService.cs" />
+    <Compile Include="Services\IErrorService.cs" />
+    <Compile Include="Converters\BooleanToBrushConverter.cs" />
+    <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
+    <Compile Include="Utils\ButtonMouseCommandBehavior.cs" />
+    <Compile Include="Services\IGlobalStateService.cs" />
+    <Compile Include="Views\ErrorListWindow.xaml.cs">
+      <DependentUpon>ErrorListWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\HistoryWindow.xaml.cs">
+      <DependentUpon>HistoryWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Machine\Enums.cs" />
+    <Compile Include="Machine\Machine.cs" />
+    <Compile Include="Machine\Machine.PLC.cs" />
+    <Compile Include="Machine\Machine.Vision.cs" />
+    <Compile Include="Machine\MachineErrorList.cs" />
+    <Compile Include="Machine\PLC\PLCAddresses.cs" />
+    <Compile Include="Machine\PLC\PLCAxis.cs" />
+    <Compile Include="Machine\PLC\PLCConstants.cs" />
+    <Compile Include="Machine\PLC\ServoAddressCalculator.cs" />
+    <Compile Include="Views\ManualOperations.xaml.cs">
+      <DependentUpon>ManualOperations.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ModelConfig.RobotPositions.cs">
+      <DependentUpon>ModelConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ModelConfig.xaml.cs">
+      <DependentUpon>ModelConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Services\Database\AutoVisionDbService.cs" />
+    <Compile Include="Resource\Strings\Loc.cs" />
+    <Compile Include="Resource\Strings\LocExtension.cs" />
+    <Compile Include="Resource\Strings\Strings.ko.Designer.cs">
+      <DependentUpon>Strings.ko.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Resource\Strings\Strings.vi.Designer.cs">
+      <DependentUpon>Strings.vi.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Resource\Strings\Strings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Views\RobotJogWindow.xaml.cs">
+      <DependentUpon>RobotJogWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Utils\LogManager.cs" />
+    <Compile Include="ViewModels\RobotPositionManager.cs" />
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\MainView.xaml.cs">
+      <DependentUpon>MainView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\TestView.xaml.cs">
+      <DependentUpon>TestView.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resource\Strings\Strings.ko.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.ko.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resource\Strings\Strings.vi.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.vi.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resource\Strings\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <None Include="App.config" />
+    <None Include="HMI.csv" />
+    <None Include="Oracle.DataAccess.Common.Configuration.Section.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Oracle.ManagedDataAccess.Client.Configuration.Section.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ViewModels\App.config" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resource\Icons\Flags\GB.svg" />
+    <EmbeddedResource Include="Resource\Icons\Flags\KR.svg" />
+    <EmbeddedResource Include="Resource\Icons\Flags\VN.svg" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\HMI\LeadshineHmi\LeadshineHmi.csproj" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.4.4\build\EntityFramework.props'))" />
+    <Error Condition="!Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.4.4\build\EntityFramework.targets'))" />
+    <Error Condition="!Exists('..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets'))" />
+  </Target>
+  <Import Project="..\packages\EntityFramework.6.4.4\build\EntityFramework.targets" Condition="Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.targets')" />
+  <Import Project="..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets" Condition="Exists('..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets')" />
+  <ItemGroup>
+    <Content Include="Resource\Pallet_label_result.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\AndModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\Apps.BaseData.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\Apps.ColorFun.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\Apps.Data.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\Apps.Style.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Portable.BouncyCastle.1.9.0\lib\net40\BouncyCastle.Crypto.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\BranchModule_STDCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\BranchStringCpmLCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\CalculatorModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\CameraIOModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\CommManagerModuleCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\CommunityToolkit.Mvvm.8.2.2\lib\netstandard2.0\CommunityToolkit.Mvvm.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\CoordinateTransformCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\DataAnalysisModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\DataAssembleModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\DataQueueModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\DataSetModuleCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.SqlServer.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\FluentModbus.5.3.2\lib\netstandard2.0\FluentModbus.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\FormatModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\FrontendUI.WPF.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\GeometryCreateCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\GlobalCameraModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\GlobalVariableModuleCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Google.Protobuf.3.21.9\lib\net45\Google.Protobuf.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\GraphicsSetModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IfBranchModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IfModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ImageAcquisitionModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ImageBufferModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ImageCollectDalsaModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ImageCollectIKModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ImageCollectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ImageSourceModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVS2dArrayCorrectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVS2dBcrModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSAffineTransformModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSAngleBisectorFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBcrModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBinaryModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBlobFindLabelsModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBlobFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBoxFilterModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBoxMergeModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSBoxOverlapCalculationModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSC2CMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCalibBoardCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCalibTransformModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCaliperCornerModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCaliperEdgeModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCaliperModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCameraMapModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCircleEdgeInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCircleEdgePairInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCircleFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCircleFitModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnCharDetectModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnCharDetectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnClassifyModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnClassifyModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnCodeRecgModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnCodeRecgModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnDetectModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnDetectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnFlawModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnFlawModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnInspectModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnInspectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnInstanceSegmentModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnInstanceSegmentModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnRetrievalModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnRetrievalModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnSingleCharDetectModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnSingleCharDetectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSCnnUnSupervisedModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSColorExtractModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSColorMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSColorRecognitionModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSColorTransformModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSDivideImageModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgeFlawInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgeInspGroupModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgePairFlawInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgePairInspGroupModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgePairPosTrendAnalyModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgePosTrendAnalyModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSEdgeWidthFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSFastFeatureMatchModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSFixtureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSFrameMeanModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSGeometricTransformModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSGluePathConductModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSGrayMatchModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSGrayMatchModuVACs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSGroupCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSHistToolModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSHPFeatureMatchModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageCombineProcessModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageCorrectCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageCorrectManualModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageEnhanceModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageFilterModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageFixtureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageMathModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageMorphModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageNormlizeModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageResizeModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImageSharpnessModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSImgStitchCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSInspectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSIntensityMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSL2CMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSL2LMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSLineAlignModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSLineEdgeInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSLineEdgePairInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSLineFindGroupModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSLineFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSLineFitModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMapCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMarkFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMarkInspModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMarkInspModuVACs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMedianLineFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMultiImageFusionModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMultiLabelFilterModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMultiLineFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSMultiPointAlignModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSNImageCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSNPointCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSOcrDlModuCCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSOcrDlModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSOcrModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSP2CMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSP2LMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSP2PMeasureModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSPairLineModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSParallelCalculateModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSPeakFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSPixelCountModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSPolarUnwarpModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSQuadrangleFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSRectFindModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSRegionCopyModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSRotateCalculateModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSScaleTransformModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSShadeCorrectModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSSinglePointAlignModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSSurfaceDefectFilterModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSTargetTrackModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\IMVSVerticalLineFindModuCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\K4os.Compression.LZ4.1.3.5\lib\net462\K4os.Compression.LZ4.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\K4os.Compression.LZ4.Streams.1.3.5\lib\net462\K4os.Compression.LZ4.Streams.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\K4os.Hash.xxHash.1.0.8\lib\net462\K4os.Hash.xxHash.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HMI\LeadshineHmi\bin\Debug\net48\LeadshineHmi.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\LightControlCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\LightModuleCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Microsoft.CSharp.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Configuration.Abstractions.6.0.0\lib\net461\Microsoft.Extensions.Configuration.Abstractions.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Configuration.6.0.0\lib\net461\Microsoft.Extensions.Configuration.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.DependencyInjection.Abstractions.6.0.0\lib\net461\Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.DependencyInjection.6.0.0\lib\net461\Microsoft.Extensions.DependencyInjection.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Hosting.Abstractions.6.0.0\lib\net461\Microsoft.Extensions.Hosting.Abstractions.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Hosting.6.0.0\lib\net461\Microsoft.Extensions.Hosting.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Logging.Abstractions.6.0.0\lib\net461\Microsoft.Extensions.Logging.Abstractions.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Logging.6.0.0\lib\net461\Microsoft.Extensions.Logging.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Options.6.0.0\lib\net461\Microsoft.Extensions.Options.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Extensions.Primitives.6.0.0\lib\net461\Microsoft.Extensions.Primitives.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Microsoft.Office.Interop.Excel.16.0.18925.20022\lib\net40\Microsoft.Office.Interop.Excel.dll">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </ReferencePath>
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\mscorlib.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\MySql.Data.8.0.33\lib\net48\MySql.Data.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Oracle.ManagedDataAccess.21.21.0\lib\net462\Oracle.ManagedDataAccess.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\PointSetMODU_STDCs.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\PresentationCore.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\PresentationFramework.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ReadCalibFileModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ReadDatasModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\RotateCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\SaveImageCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\SaveTextModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\SendDatasModuleCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Converters.Wpf.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Core.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Css.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Dom.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Model.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.1.8.4.2\lib\net48\SharpVectors.Rendering.Gdi.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Rendering.Wpf.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\SharpVectors.Wpf.1.8.4.2\lib\net48\SharpVectors.Runtime.Wpf.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\ShellModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\SinglePointGrabModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\SinglePointMapAlignModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\SinglePointRectifyModuCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\FreeSpire.XLS.14.2.0\lib\net48\Spire.XLS.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\StringCompareModuleCs.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Buffers.4.6.0\lib\net462\System.Buffers.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.ComponentModel.DataAnnotations.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Configuration.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Core.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Data.DataSetExtensions.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Data.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.119.0\lib\net46\System.Data.SQLite.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Data.SQLite.EF6.1.0.119.0\lib\net46\System.Data.SQLite.EF6.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Data.SQLite.Linq.1.0.119.0\lib\net46\System.Data.SQLite.Linq.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Drawing.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Formats.Asn1.8.0.1\lib\net462\System.Formats.Asn1.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.IO.Pipelines.5.0.2\lib\net461\System.IO.Pipelines.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.IO.Ports.5.0.0\lib\net461\System.IO.Ports.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Management.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Memory.4.6.0\lib\net462\System.Memory.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Net.Http.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Numerics.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Numerics.Vectors.4.6.0\lib\net462\System.Numerics.Vectors.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Runtime.CompilerServices.Unsafe.6.1.0\lib\net462\System.Runtime.CompilerServices.Unsafe.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Text.Encodings.Web.6.0.0\lib\net461\System.Text.Encodings.Web.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Text.Json.6.0.10\lib\net461\System.Text.Json.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Threading.Tasks.Dataflow.10.0.3\lib\net462\System.Threading.Tasks.Dataflow.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Transactions.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Web.Extensions.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Windows.Forms.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Xaml.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Xml.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Xml.Linq.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\TimeStatisticModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\TranslationCalibModuCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\TriggerModuleCs.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VM.Core.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VM.PlatformSDKCS.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VM.Xml.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VMBaseControls.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VMControls.BaseInterface.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VMControls.Interface.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VMControls.RenderInterface.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VMControls.Winform.Release.dll" />
+    <ReferencePath Include="C:\Program Files\VisionMaster4.2.0\Development\V4.x\ComControls\Assembly\VMControls.WPF.Release.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\WindowsBase.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\ZXing.Net.0.16.11\lib\net48\zxing.dll" />
+    <ReferencePath Include="F:\Dev\Projects\AI Project\HaengSungAOI2\packages\ZXing.Net.0.16.11\lib\net48\zxing.presentation.dll" />
+    <ReferencePath Include="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades\netstandard.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\ErrorListWindow.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\HistoryWindow.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\MainWindow.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\ManualOperations.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\ModelConfig.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\RobotJogWindow.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\MainView.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\TestView.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\SettingsWindow.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\App.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\HaengSungAOI_WPF_Content.g.cs" />
+    <Compile Include="F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\GeneratedInternalTypeHelper.g.cs" />
+  </ItemGroup>
+</Project>

@@ -9,15 +9,17 @@ namespace HaengSungAOI_WPF.Services.Machine
     public class ScanOutService : IScanOutService
     {
         private readonly ILogger<ScanOutService> _logger;
+        private readonly IErrorService _errorService;
         private SerialPort _serialPort;
 
         public bool IsOpen => _serialPort?.IsOpen ?? false;
 
         public event EventHandler<ScanOutReceivedEventArgs> DataReceived;
 
-        public ScanOutService(ILogger<ScanOutService> logger)
+        public ScanOutService(ILogger<ScanOutService> logger, IErrorService errorService)
         {
             _logger = logger;
+            _errorService = errorService;
         }
 
         public void Open(string portName, int baudRate = 115200)
@@ -54,7 +56,8 @@ namespace HaengSungAOI_WPF.Services.Machine
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Failed to open ScanOut serial port: {portName}");
-                throw;
+                _errorService.ReportError("ScanOut", $"ScanOut serial port {portName} failed to open", ex);
+                // Do not re-throw to prevent application crash. The port remains closed.
             }
         }
 

@@ -6,12 +6,14 @@ using Microsoft.Extensions.Logging;
 using VM.Core;
 using HaengSungAOI_WPF.Models;
 using HaengSungAOI_WPF.Utils;
+using HaengSungAOI_WPF.Machine;
 
 namespace HaengSungAOI_WPF.Services.Vision
 {
     public class VisionService : IVisionService
     {
         private readonly ILogger<VisionService> _logger;
+        private readonly IErrorService _errorService;
         private readonly VisionSolutionManager _solutionManager;
         private string _currentSolutionPath;
         private readonly Dictionary<string, VmProcedure> _procedures = new Dictionary<string, VmProcedure>();
@@ -23,9 +25,10 @@ namespace HaengSungAOI_WPF.Services.Vision
         public event EventHandler<VisionProcedureCompletedEventArgs> ProcedureCompleted;
         public event EventHandler<string> SolutionLoaded;
 
-        public VisionService(ILogger<VisionService> logger)
+        public VisionService(ILogger<VisionService> logger, IErrorService errorService)
         {
             _logger = logger;
+            _errorService = errorService;
             _solutionManager = new VisionSolutionManager();
         }
 
@@ -52,8 +55,9 @@ namespace HaengSungAOI_WPF.Services.Vision
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading vision solution: {path}");
-                throw;
+                _logger.LogError(ex, $"Error loading vision solution: {path}. (Vision SDK environment might be missing)");
+                _errorService.ReportError("Vision", $"Failed to load vision solution: {path}", ex);
+                // Do not re-throw to allow the application to continue running without vision hardware
             }
         }
 
@@ -79,7 +83,7 @@ namespace HaengSungAOI_WPF.Services.Vision
                 if (proc != null)
                 {
                     _procedures[name] = proc;
-                    proc.OnWorkEndStatusCallBack += (status, ctx) => OnProcedureEnd(name, proc, status);
+                    proc.OnWorkEndStatusCallBack += (status, ctx) => OnProcedureEnd(name, proc, (int)status);
                     _logger.LogDebug($"Procedure initialized: {name}");
                 }
                 else

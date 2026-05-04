@@ -23,15 +23,19 @@ namespace HaengSungAOI_WPF.Services.Machine
         private readonly AutoVisionDbService _dbService;
         private readonly IImageDisplayService _imageDisplayService;
         private readonly IGlobalStateService _globalState;
+        private readonly IMachineHmiService _hmiService;
+        private readonly IErrorService _errorService;
+
+        private HaengSungAOI_WPF.Machine.Machine _machine;
+        public HaengSungAOI_WPF.Machine.Machine Machine => _machine;
+        public IPlcService PLC => _plcService;
+        public IMachineHmiService HMI => _hmiService;
 
         private bool _isInitialized;
         private bool _isRunning;
         private MachineMode _mode = MachineMode.Manual;
         private PCBModel _currentModel;
 
-        private readonly ConcurrentQueue<WipData> _wipQueue1 = new ConcurrentQueue<WipData>();
-        private readonly ConcurrentQueue<WipData> _wipQueue2 = new ConcurrentQueue<WipData>();
-        private readonly ConcurrentQueue<WipData> _wipQueueScanout = new ConcurrentQueue<WipData>();
 
         private readonly ActionBlock<VisionTriggerEventArgs> _visionProcessor;
         private readonly ActionBlock<ScanOutReceivedEventArgs> _scanOutResponseProcessor;
@@ -43,6 +47,18 @@ namespace HaengSungAOI_WPF.Services.Machine
         public PCBModel CurrentModel => _currentModel;
         public object FrontendControl { get; set; }
 
+        public bool EnableScanOut 
+        { 
+            get => _machine?.EnableScanOut ?? true; 
+            set { if (_machine != null) _machine.EnableScanOut = value; } 
+        }
+
+        public bool OverrideInspection 
+        { 
+            get => _machine?.IsByPass ?? false; 
+            set { if (_machine != null) _machine.IsByPass = value; } 
+        }
+
         public event Action<bool> OnRunningStateChanged;
         public event Action<string> OnStatusMessageChanged;
 
@@ -53,7 +69,9 @@ namespace HaengSungAOI_WPF.Services.Machine
             IScanOutService scanOutService,
             AutoVisionDbService dbService,
             IImageDisplayService imageDisplayService,
-            IGlobalStateService globalState)
+            IGlobalStateService globalState,
+            IErrorService errorService,
+            IMachineHmiService hmiService = null)
         {
             _logger = logger;
             _plcService = plcService;
@@ -62,6 +80,8 @@ namespace HaengSungAOI_WPF.Services.Machine
             _dbService = dbService;
             _imageDisplayService = imageDisplayService;
             _globalState = globalState;
+            _hmiService = hmiService;
+            _errorService = errorService;
 
             // Initialize Processors (ActionBlocks)
             _visionProcessor = new ActionBlock<VisionTriggerEventArgs>(
@@ -93,6 +113,10 @@ namespace HaengSungAOI_WPF.Services.Machine
             {
                 _logger.LogInformation("Initializing Machine Service...");
                 
+                // Initialize legacy Machine object
+                _machine = new HaengSungAOI_WPF.Machine.Machine(_plcService, _errorService);
+                _machine.Initialize();
+
                 _visionService.FrontendControl = FrontendControl;
                 _plcService.Connect();
                 _plcService.Start();
@@ -114,7 +138,7 @@ namespace HaengSungAOI_WPF.Services.Machine
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to initialize Machine Service");
-                throw;
+                // Do not re-throw to avoid application crash during initialization
             }
         }
 
@@ -139,15 +163,19 @@ namespace HaengSungAOI_WPF.Services.Machine
         public void EmergencyStop()
         {
             Stop();
+            _machine?.EmergencyStop();
             _logger.LogCritical("Emergency Stop Activated");
+        }
+
+        public void ResetEmergency()
+        {
+            _machine?.ResetEmergency();
+            _logger.LogInformation("Emergency Reset");
         }
 
         public void ClearQueues()
         {
-            while (_wipQueue1.TryDequeue(out _)) { }
-            while (_wipQueue2.TryDequeue(out _)) { }
-            while (_wipQueueScanout.TryDequeue(out _)) { }
-            _logger.LogInformation("All WIP queues cleared");
+            _logger.LogInformation("WIP queues cleared (No-op in new architecture)");
         }
 
         public void UpdateModel(PCBModel model)
@@ -162,11 +190,6 @@ namespace HaengSungAOI_WPF.Services.Machine
             {
                 _logger.LogInformation($"Processing Vision Trigger: {e.ProcedureName}");
                 
-                // Logic for WIP Queues (Simplified from original)
-                if (e.ProcedureName == "Align")
-                {
-                    _wipQueue1.Enqueue(new WipData { PID = "PENDING_" + DateTime.Now.Ticks });
-                }
 
                 await _visionService.RunProcedureAsync(e.ProcedureName);
             }

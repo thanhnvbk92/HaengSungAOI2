@@ -1,18 +1,26 @@
 using System;
-using System.Threading.Tasks;
-using MySql.Data.MySqlClient;
-using HaengSungAOI_WPF.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using HaengSungAOI_WPF.Models;
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
 
 namespace HaengSungAOI_WPF.Services.Database
 {
     public class AutoVisionDbService
     {
+        private readonly ILogger<AutoVisionDbService> _logger;
         private readonly string _mmesConnectionString;
         private readonly string _hsmesConnectionString;
 
-        public AutoVisionDbService()
+        public AutoVisionDbService() : this(null)
         {
+        }
+
+        public AutoVisionDbService(ILogger<AutoVisionDbService> logger)
+        {
+            _logger = logger;
             _mmesConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString
                 ?? "Server=10.7.10.6;Database=mex_mes;User=root;Password=ivihaengsung@1;AllowLoadLocalInfile=true";
             _hsmesConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["HsmesConnection"]?.ConnectionString
@@ -32,113 +40,108 @@ namespace HaengSungAOI_WPF.Services.Database
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Bỏ qua lỗi DNS, dùng connection string ban đầu
+                if (_logger != null)
+                    _logger.LogWarning(ex, "Error occurred during DNS host entry lookup for connection string adjustment.");
+                else
+                    Utils.Logger.Warning("AutoVisionDbService", "Error occurred during DNS host entry lookup for connection string adjustment.", ex);
             }
         }
 
         public async Task<bool> InsertVisionResultAsync(TbAutoVisionResult result)
         {
-            MySqlConnection connection = null;
             try
             {
-                connection = new MySqlConnection(_mmesConnectionString);
-                await connection.OpenAsync();
-                var query = @"
-                    INSERT INTO tb_auto_vision_result 
-                    (pid, machine_id, work_order, station, result, ebr, image_path, inspection_time, tack_time) 
-                    VALUES (@pid, @machineId, @workOrder, @station, @result, @ebr, @imagePath, @inspectionTime, @tackTime)";
-
-                using (var cmd = new MySqlCommand(query, connection))
+                using (var connection = new MySqlConnection(_mmesConnectionString))
                 {
-                    cmd.Parameters.AddWithValue("@pid", result.Pid ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@machineId", result.MachineId);
-                    cmd.Parameters.AddWithValue("@workOrder", result.WorkOrder ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@station", result.Station ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@result", result.Result ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@ebr", result.Ebr ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@imagePath", result.ImagePath ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@inspectionTime", result.InspectionTime ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@tackTime", result.TackTime ?? (object)DBNull.Value);
+                    await connection.OpenAsync();
+                    var query = @"
+                        INSERT INTO tb_auto_vision_result 
+                        (pid, machine_id, work_order, station, result, ebr, image_path, inspection_time, tack_time) 
+                        VALUES (@pid, @machineId, @workOrder, @station, @result, @ebr, @imagePath, @inspectionTime, @tackTime)";
 
-                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
-
-                    if (rowsAffected > 0 && !string.IsNullOrEmpty(result.Pid) && !string.IsNullOrEmpty(result.Station))
+                    using (var cmd = new MySqlCommand(query, connection))
                     {
-                        var checkQuery = @"
-                            SELECT COUNT(*) as Total, SUM(CASE WHEN result = 'NG' THEN 1 ELSE 0 END) as NgCount 
-                            FROM tb_auto_vision_result 
-                            WHERE pid = @pid AND station = @station";
+                        cmd.Parameters.AddWithValue("@pid", result.Pid ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@machineId", result.MachineId);
+                        cmd.Parameters.AddWithValue("@workOrder", result.WorkOrder ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@station", result.Station ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@result", result.Result ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ebr", result.Ebr ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@imagePath", result.ImagePath ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@inspectionTime", result.InspectionTime ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tackTime", result.TackTime ?? (object)DBNull.Value);
 
-                        int totalRecords = 0;
-                        int ngRecords = 0;
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
-                        using (var cmdCheck = new MySqlCommand(checkQuery, connection))
+                        if (rowsAffected > 0 && !string.IsNullOrEmpty(result.Pid) && !string.IsNullOrEmpty(result.Station))
                         {
-                            cmdCheck.Parameters.AddWithValue("@pid", result.Pid);
-                            cmdCheck.Parameters.AddWithValue("@station", result.Station);
+                            var checkQuery = @"
+                                SELECT COUNT(*) as Total, SUM(CASE WHEN result = 'NG' THEN 1 ELSE 0 END) as NgCount 
+                                FROM tb_auto_vision_result 
+                                WHERE pid = @pid AND station = @station";
 
-                            using (var reader = await cmdCheck.ExecuteReaderAsync())
+                            int totalRecords = 0;
+                            int ngRecords = 0;
+
+                            using (var cmdCheck = new MySqlCommand(checkQuery, connection))
                             {
-                                if (await reader.ReadAsync())
-                                {
-                                    totalRecords = reader.IsDBNull(0) ? 0 : Convert.ToInt32(reader.GetValue(0));
-                                    ngRecords = reader.IsDBNull(1) ? 0 : Convert.ToInt32(reader.GetValue(1));
-                                }
-                            }
-                        }
+                                cmdCheck.Parameters.AddWithValue("@pid", result.Pid);
+                                cmdCheck.Parameters.AddWithValue("@station", result.Station);
 
-                        if (totalRecords > 1 && ngRecords > 0)
-                        {
-                            for (int i = 0; i < 3; i++)
-                            {
-                                var scanoutCheckQuery = "SELECT COUNT(*) FROM tb_auto_vision_scanout WHERE pid = @pid";
-                                int scanoutExists = 0;
-
-                                using (var cmdScanoutCheck = new MySqlCommand(scanoutCheckQuery, connection))
+                                using (var reader = await cmdCheck.ExecuteReaderAsync())
                                 {
-                                    cmdScanoutCheck.Parameters.AddWithValue("@pid", result.Pid);
-                                    scanoutExists = Convert.ToInt32(await cmdScanoutCheck.ExecuteScalarAsync());
-                                }
-
-                                if (scanoutExists > 0)
-                                {
-                                    var updateQuery = @"
-                                        UPDATE tb_auto_vision_scanout 
-                                        SET inspection_count = IFNULL(inspection_count, 0) + 1 
-                                        WHERE pid = @pid";
-                                    using (var cmdUpdate = new MySqlCommand(updateQuery, connection))
+                                    if (await reader.ReadAsync())
                                     {
-                                        cmdUpdate.Parameters.AddWithValue("@pid", result.Pid);
-                                        await cmdUpdate.ExecuteNonQueryAsync();
-                                        break;
+                                        totalRecords = reader.IsDBNull(0) ? 0 : Convert.ToInt32(reader.GetValue(0));
+                                        ngRecords = reader.IsDBNull(1) ? 0 : Convert.ToInt32(reader.GetValue(1));
                                     }
                                 }
-                                else
+                            }
+
+                            if (totalRecords > 1 && ngRecords > 0)
+                            {
+                                for (int i = 0; i < 3; i++)
                                 {
-                                    if (i < 2) await Task.Delay(500);
+                                    var scanoutCheckQuery = "SELECT COUNT(*) FROM tb_auto_vision_scanout WHERE pid = @pid";
+                                    int scanoutExists = 0;
+
+                                    using (var cmdScanoutCheck = new MySqlCommand(scanoutCheckQuery, connection))
+                                    {
+                                        cmdScanoutCheck.Parameters.AddWithValue("@pid", result.Pid);
+                                        scanoutExists = Convert.ToInt32(await cmdScanoutCheck.ExecuteScalarAsync());
+                                    }
+
+                                    if (scanoutExists > 0)
+                                    {
+                                        var updateQuery = @"
+                                            UPDATE tb_auto_vision_scanout 
+                                            SET inspection_count = IFNULL(inspection_count, 0) + 1 
+                                            WHERE pid = @pid";
+                                        using (var cmdUpdate = new MySqlCommand(updateQuery, connection))
+                                        {
+                                            cmdUpdate.Parameters.AddWithValue("@pid", result.Pid);
+                                            await cmdUpdate.ExecuteNonQueryAsync();
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (i < 2) await Task.Delay(500);
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    return rowsAffected > 0;
+                        return rowsAffected > 0;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                // TODO: Log exception
-                Console.WriteLine($"Error inserting vision result: {ex.Message}");
+                _logger.LogError(ex, "Error inserting vision result for PID: {Pid}", result.Pid);
                 return false;
-            }
-            finally
-            {
-                if (connection != null && connection.State == System.Data.ConnectionState.Open)
-                {
-                    await connection.CloseAsync();
-                }
-                connection?.Dispose();
             }
         }
 
@@ -224,14 +227,8 @@ namespace HaengSungAOI_WPF.Services.Database
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in UpdateVisionScanoutAsync: {ex.Message}");
+                _logger.LogError(ex, "Error in UpdateVisionScanoutAsync for PID: {Pid}", scanout.Pid);
                 return false;
-            }
-            finally
-            {
-                if (connection != null && connection.State == System.Data.ConnectionState.Open)
-                    await connection.CloseAsync();
-                connection?.Dispose();
             }
         }
 
@@ -400,7 +397,7 @@ namespace HaengSungAOI_WPF.Services.Database
                                 await cmdUpdate.ExecuteNonQueryAsync();
                             }
 
-                            if (App.IsAutoMode && earliestStartTime.HasValue)
+                            if (App.GlobalState.IsAutoMode && earliestStartTime.HasValue)
                             {
                                 string insertDowntimeQuery = @"
                                     INSERT INTO tb_auto_vision_down_time (machine_id, start_time, end_time, down_time_minute)

@@ -1,6 +1,6 @@
 using HaengSungAOI_WPF.Machine;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
+using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Utils;
 using HaengSungAOI_WPF.ViewModels;
@@ -18,7 +18,7 @@ namespace HaengSungAOI_WPF.Services.UI
         private static readonly SolidColorBrush BrushTrayGood = new SolidColorBrush(Color.FromRgb(0x87, 0xCE, 0xEB));
         private static readonly SolidColorBrush BrushNa = new SolidColorBrush(Colors.Gray);
 
-        public void UpdateTrayQuantities(MainWindowViewModel vm, Machine.Machine machine)
+        public void UpdateTrayQuantities(MainViewModel vm, HaengSungAOI_WPF.Machine.Machine machine)
         {
             if (vm == null) return;
 
@@ -46,25 +46,19 @@ namespace HaengSungAOI_WPF.Services.UI
             vm.BlankTrayQuantityForeground = GetTrayColorBrush(blankTray, 2, 4);
         }
 
-        public async Task WritePcbTrayQuantityToPlcAsync(Window owner, Machine.Machine machine, MachineErrorList errorList, ushort value)
+        public async Task WritePcbTrayQuantityToPlcAsync(Window owner, HaengSungAOI_WPF.Machine.Machine machine, MachineErrorList errorList, ushort value)
         {
             try
             {
-                var plc = machine?.PLC;
-                if (plc == null || !plc.IsConnected)
+                var plcService = App.PlcService;
+                if (plcService == null || !plcService.IsConnected)
                 {
                     MessageBox.Show(owner, "PLC chưa kết nối. Không thể cập nhật tray quantity.", "PLC Not Connected", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                ushort address;
-                if (!PLCAddresses.TrayQuantity_Registers.TryGetValue("PCB_Slot", out address))
-                {
-                    MessageBox.Show(owner, "Lỗi cấu hình địa chỉ PLC. Không thể cập nhật tray quantity.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                await Task.Run(() => plc.WriteHoldingRegistersDirect(address, new ushort[] { value }));
+                string tag = "PCB_Slot";
+                await plcService.WriteRegisterAsync(tag, value);
                 machine.PCBTrayQuantity = value;
             }
             catch (Exception ex)
@@ -77,7 +71,7 @@ namespace HaengSungAOI_WPF.Services.UI
 
         public async Task HandleHmiButtonDownAsync(
             string buttonTag,
-            PLCController plc,
+            IPlcService plcService,
             MachineErrorList errorList,
             Func<bool> hasUnacknowledgedErrors,
             Func<string, string, bool> showCriticalConfirmation,
@@ -86,7 +80,7 @@ namespace HaengSungAOI_WPF.Services.UI
             Func<Task> initSession,
             Func<Task> updateEnd)
         {
-            if (string.IsNullOrWhiteSpace(buttonTag) || plc == null || !plc.IsConnected) return;
+            if (string.IsNullOrWhiteSpace(buttonTag) || plcService == null || !plcService.IsConnected) return;
 
             try
             {
@@ -104,24 +98,24 @@ namespace HaengSungAOI_WPF.Services.UI
                     return;
                 }
 
-                await plc.WriteHoldingRegisterAsync(buttonTag, 1);
+                await plcService.WriteRegisterAsync(buttonTag, 1);
 
                 if (buttonTag == "HMI_Auto_PB")
                 {
                     await Task.Delay(100);
-                    await plc.WriteHoldingRegisterAsync(buttonTag, 0);
+                    await plcService.WriteRegisterAsync(buttonTag, 0);
                     setAutoModeOn();
                 }
                 else if (buttonTag == "HMI_Manual_PB")
                 {
                     await Task.Delay(100);
-                    await plc.WriteHoldingRegisterAsync(buttonTag, 0);
+                    await plcService.WriteRegisterAsync(buttonTag, 0);
                     setAutoModeOff();
                 }
                 else if (buttonTag == "HMI_Counter_Reset_PB")
                 {
                     await Task.Delay(100);
-                    await plc.WriteHoldingRegisterAsync(buttonTag, 0);
+                    await plcService.WriteRegisterAsync(buttonTag, 0);
                 }
 
                 if (buttonTag == "HMI_Start")
@@ -140,14 +134,14 @@ namespace HaengSungAOI_WPF.Services.UI
             }
         }
 
-        public async Task HandleHmiButtonUpAsync(string buttonTag, PLCController plc, MachineErrorList errorList)
+        public async Task HandleHmiButtonUpAsync(string buttonTag, IPlcService plcService, MachineErrorList errorList)
         {
             if (string.IsNullOrWhiteSpace(buttonTag)) return;
 
             try
             {
-                if (plc == null || !plc.IsConnected) return;
-                await plc.WriteHoldingRegisterAsync(buttonTag, 0);
+                if (plcService == null || !plcService.IsConnected) return;
+                await plcService.WriteRegisterAsync(buttonTag, 0);
             }
             catch (Exception ex)
             {

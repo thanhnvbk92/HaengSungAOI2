@@ -12,5 +12,7 @@ namespace HaengSungAOI_WPF.Services
         event Action ErrorsChanged;
         
         void AcknowledgeAll();
+        void ReportError(string source, string message, Exception ex = null);
+        void ReportError(ErrorType type, string source, string message, Exception ex = null);
     }
 }

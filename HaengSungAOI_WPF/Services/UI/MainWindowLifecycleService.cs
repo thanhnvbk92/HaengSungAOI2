@@ -1,6 +1,6 @@
 using HaengSungAOI_WPF.Machine;
 using HaengSungAOI_WPF.Machine.PLC;
-using HaengSungAOI_WPF.Machine.PLC.PLC;
+using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Utils;
 using System;
@@ -15,7 +15,7 @@ namespace HaengSungAOI_WPF.Services.UI
     public class MainWindowLifecycleService
     {
         public async Task InitializeMainWindowAsync(
-            Machine.Machine machine,
+            HaengSungAOI_WPF.Machine.Machine machine,
             VmFrontendControl frontendControl,
             Action populateHmiLampMapping,
             Action updateMachineControlButtons,
@@ -56,7 +56,7 @@ namespace HaengSungAOI_WPF.Services.UI
             }
         }
 
-        public void HandleWindowActivated(Machine.Machine machine)
+        public void HandleWindowActivated(HaengSungAOI_WPF.Machine.Machine machine)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace HaengSungAOI_WPF.Services.UI
             }
         }
 
-        public void HandleWindowKeyDown(Window window, KeyEventArgs e, Machine.Machine machine, MachineErrorList errorList, Action updateMachineControlButtons)
+        public void HandleWindowKeyDown(Window window, KeyEventArgs e, HaengSungAOI_WPF.Machine.Machine machine, MachineErrorList errorList, Action updateMachineControlButtons)
         {
             if (e.Key == Key.F11)
             {
@@ -105,7 +105,7 @@ namespace HaengSungAOI_WPF.Services.UI
             MachineErrorList errorList,
             EventHandler<MachineErrorEventArgs> onCriticalErrorAdded,
             EventHandler<MachineErrorEventArgs> onErrorAdded,
-            Machine.Machine machine,
+            HaengSungAOI_WPF.Machine.Machine machine,
             Action<bool> onMachineEnabledStateChanged,
             int? actualMachineId)
         {

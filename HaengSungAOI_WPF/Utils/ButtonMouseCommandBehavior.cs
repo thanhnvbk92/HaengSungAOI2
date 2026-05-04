@@ -27,6 +27,21 @@ namespace HaengSungAOI_WPF.Utils
                 typeof(ButtonMouseCommandBehavior),
                 new PropertyMetadata(null));
 
+        // Alias properties for XAML convenience (both delegate to CommandParameter internally)
+        public static readonly DependencyProperty MouseDownCommandParameterProperty =
+            DependencyProperty.RegisterAttached(
+                "MouseDownCommandParameter",
+                typeof(object),
+                typeof(ButtonMouseCommandBehavior),
+                new PropertyMetadata(null, OnMouseDownCommandParameterChanged));
+
+        public static readonly DependencyProperty MouseUpCommandParameterProperty =
+            DependencyProperty.RegisterAttached(
+                "MouseUpCommandParameter",
+                typeof(object),
+                typeof(ButtonMouseCommandBehavior),
+                new PropertyMetadata(null, OnMouseUpCommandParameterChanged));
+
         public static ICommand GetMouseDownCommand(DependencyObject obj) => (ICommand)obj.GetValue(MouseDownCommandProperty);
         public static void SetMouseDownCommand(DependencyObject obj, ICommand value) => obj.SetValue(MouseDownCommandProperty, value);
 
@@ -35,6 +50,27 @@ namespace HaengSungAOI_WPF.Utils
 
         public static object GetCommandParameter(DependencyObject obj) => obj.GetValue(CommandParameterProperty);
         public static void SetCommandParameter(DependencyObject obj, object value) => obj.SetValue(CommandParameterProperty, value);
+
+        public static object GetMouseDownCommandParameter(DependencyObject obj) => obj.GetValue(MouseDownCommandParameterProperty);
+        public static void SetMouseDownCommandParameter(DependencyObject obj, object value) => obj.SetValue(MouseDownCommandParameterProperty, value);
+
+        public static object GetMouseUpCommandParameter(DependencyObject obj) => obj.GetValue(MouseUpCommandParameterProperty);
+        public static void SetMouseUpCommandParameter(DependencyObject obj, object value) => obj.SetValue(MouseUpCommandParameterProperty, value);
+
+        private static void OnMouseDownCommandParameterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // Sync to shared CommandParameter if not already set
+            if (d.GetValue(CommandParameterProperty) == null || d.GetValue(CommandParameterProperty) == e.OldValue)
+            {
+                d.SetValue(CommandParameterProperty, e.NewValue);
+            }
+        }
+
+        private static void OnMouseUpCommandParameterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // MouseUpCommandParameter currently uses same CommandParameter
+            // This alias exists for XAML symmetry
+        }
 
         private static void OnMouseDownCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {

@@ -1,4 +1,4 @@
-<Window x:Class="HaengSungAOI_WPF.SettingsWindow"
+<Window x:Class="HaengSungAOI_WPF.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,6 +9,9 @@
         Background="#1e1e2f"
         WindowStartupLocation="CenterOwner"
         WindowState="Maximized">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
     
     <Grid>
         <Grid.RowDefinitions>
@@ -28,8 +31,10 @@
                 <TextBlock Text="Servo Parameter Settings" FontSize="24" Foreground="White" 
                            FontWeight="Bold" VerticalAlignment="Center" DockPanel.Dock="Left"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                    <TextBlock x:Name="ConnectionStatusText" Text="PLC: Disconnected" 
-                               Foreground="Orange" FontSize="14" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                    <TextBlock x:Name="ConnectionStatusText" 
+                               Text="{Binding ConnectionStatusText}" 
+                               Foreground="{Binding ConnectionStatusColor}" 
+                               FontSize="14" VerticalAlignment="Center" Margin="0,0,20,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -60,13 +65,13 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <Button x:Name="ReadAllButton" Content="Read All" Width="120" Height="35"
                             Background="#0A5A0A" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
-                            Margin="5,0" Click="ReadAllButton_Click"/>
+                            Margin="5,0" Command="{Binding ReadAllCommand}"/>
                     <Button x:Name="WriteAllButton" Content="Write All" Width="120" Height="35"
                             Background="#8B0000" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
-                            Margin="5,0" Click="WriteAllButton_Click"/>
+                            Margin="5,0" Command="{Binding WriteAllCommand}"/>
                     <Button x:Name="RefreshButton" Content="Refresh" Width="100" Height="35"
                             Background="#232336" Foreground="White" FontWeight="Bold" BorderBrush="#444" BorderThickness="1"
-                            Margin="5,0" Click="RefreshButton_Click"/>
+                            Margin="5,0" Command="{Binding RefreshCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -322,11 +327,13 @@
         </Border>
 
         <!-- Footer -->
-        <Border Grid.Row="3" Background="#2d2d3c" Padding="20,0">
+        <Border Grid.Row="3" Background="#2d2d3c" Padding="15,0">
             <DockPanel>
-                <TextBlock x:Name="StatusText" Text="Ready" 
-                           Foreground="LightGray" FontSize="12" 
-                           VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                <TextBlock x:Name="StatusText" Text="{Binding StatusText}" 
+                           Foreground="LightGray" FontSize="12" VerticalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="True" Width="200" Height="10" 
+                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             HorizontalAlignment="Right" Margin="10,0"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                     <Button Content="Close"
                             Width="100" Height="35"

@@ -13,13 +13,21 @@ namespace HaengSungAOI_WPF.Services.Machine
         PCBModel CurrentModel { get; }
         object FrontendControl { get; set; }
 
+        IPlcService PLC { get; }
+        IMachineHmiService HMI { get; }
+        HaengSungAOI_WPF.Machine.Machine Machine { get; }
+        
         void Initialize();
         void Start();
         void Stop();
         void EmergencyStop();
+        void ResetEmergency();
         
         void ClearQueues();
         void UpdateModel(PCBModel model);
+        
+        bool EnableScanOut { get; set; }
+        bool OverrideInspection { get; set; }
         
         event Action<bool> OnRunningStateChanged;
         event Action<string> OnStatusMessageChanged;

@@ -29,5 +29,21 @@ namespace HaengSungAOI_WPF.Services
         {
             // Implementation of acknowledging errors if needed
         }
+
+        public void ReportError(string source, string message, Exception ex = null)
+        {
+            if (ex != null)
+                _errorList.AddException(source, message, ex);
+            else
+                _errorList.AddError(ErrorType.Error, source, message);
+        }
+
+        public void ReportError(ErrorType type, string source, string message, Exception ex = null)
+        {
+            if (ex != null)
+                _errorList.AddException(source, message, ex);
+            else
+                _errorList.AddError(type, source, message);
+        }
     }
 }
