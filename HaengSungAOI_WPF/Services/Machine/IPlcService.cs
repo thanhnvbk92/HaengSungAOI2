@@ -49,6 +49,20 @@ namespace HaengSungAOI_WPF.Services.Machine
         }
     }
 
+    public class TagChangedEventArgs : EventArgs
+    {
+        public string TagName { get; }
+        public object NewValue { get; }
+        public DateTime Timestamp { get; }
+
+        public TagChangedEventArgs(string tagName, object newValue)
+        {
+            TagName = tagName;
+            NewValue = newValue;
+            Timestamp = DateTime.Now;
+        }
+    }
+
     public interface IPlcService : IDisposable
     {
         bool IsConnected { get; }
@@ -60,6 +74,7 @@ namespace HaengSungAOI_WPF.Services.Machine
         event EventHandler<VisionTriggerEventArgs> VisionTriggered;
         event EventHandler<AlarmEventArgs> AlarmChanged;
         event EventHandler<TrayUpdateEventArgs> TrayUpdated;
+        event EventHandler<TagChangedEventArgs> TagChanged;
         event EventHandler<bool> ConnectionStatusChanged;
         event EventHandler<Dictionary<string, bool>> HmiLampStateChanged;
 
@@ -76,6 +91,7 @@ namespace HaengSungAOI_WPF.Services.Machine
         double GetDoubleValue(string tagName);
         ushort GetUInt16Value(string tagName);
         short GetInt16Value(string tagName);
+        object GetTagValue(string tagName);
 
         /// <summary>
         /// Reads a range of holding registers from the PLC starting at the specified address.

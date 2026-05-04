@@ -118,14 +118,18 @@ namespace HaengSungAOI_WPF.Core
         {
             IsMachineEnabled = true;
             Mode = MachineMode.Auto;
-            Logger.Info("Machine", "Machine started (Core)");
+            PLC?.WriteRegister("HMI_Start", 1);
+            PLC?.WriteRegister("HMI_Stop", 0);
+            Logger.Info("Machine", "Machine started (Core) - Command sent to PLC");
         }
 
         public void StopMachine()
         {
             IsMachineEnabled = false;
             Mode = MachineMode.Manual;
-            Logger.Info("Machine", "Machine stopped (Core)");
+            PLC?.WriteRegister("HMI_Stop", 1);
+            PLC?.WriteRegister("HMI_Start", 0);
+            Logger.Info("Machine", "Machine stopped (Core) - Command sent to PLC");
         }
 
         public void EmergencyStop()

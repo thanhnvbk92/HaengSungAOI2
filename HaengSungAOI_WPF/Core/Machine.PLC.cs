@@ -507,17 +507,17 @@ namespace HaengSungAOI_WPF.Core
         private string ReadBarcodeFromPLC(StationType stationType)
         {
             if (PLC?.IsConnected != true) return "";
-            ushort startAddress = stationType switch
+            string tagName = stationType switch
             {
-                StationType.Station1 => 450,
-                StationType.Transfer => 750,
-                StationType.Station2 => 760,
-                StationType.FinalOk => 460,
-                StationType.FinalNg => 470,
-                _ => 450
+                StationType.Station1 => "Barcode_Station1",
+                StationType.FinalOk => "Barcode_FinalOk",
+                StationType.FinalNg => "Barcode_FinalNg",
+                _ => "Barcode_Station1"
             };
-            ushort[] registers = PLC.GetRegisterArrayValue(startAddress, 10);
+
+            var registers = PLC.GetTagValue(tagName) as ushort[];
             if (registers == null) return "";
+            
             var sb = new System.Text.StringBuilder();
             foreach (var reg in registers)
             {

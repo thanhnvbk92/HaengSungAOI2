@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 
 namespace HaengSungAOI_WPF.Core.PLC
 {
@@ -23,43 +23,43 @@ namespace HaengSungAOI_WPF.Core.PLC
         MainWindowHMIButtons = 1 << 1,
         
         /// <summary>
-        /// Servo axis current positions (14 axes × 4 registers = 56 registers)
+        /// Servo axis current positions (14 axes x 4 registers = 56 registers)
         /// Active when: ModelConfig or RobotJogWindow is active
         /// </summary>
         ServoPositions = 1 << 2,
         
         /// <summary>
-        /// Servo axis error codes (14 axes × 4 registers = 56 registers)
+        /// Servo axis error codes (14 axes x 4 registers = 56 registers)
         /// Active when: Always (for safety monitoring)
         /// </summary>
         ServoErrors = 1 << 3,
         
         /// <summary>
-        /// Servo axis speeds, operation status (14 axes × 8 registers = 112 registers)
+        /// Servo axis speeds, operation status (14 axes x 8 registers = 112 registers)
         /// Active when: ModelConfig or RobotJogWindow is active (optional)
         /// </summary>
         ServoStatus = 1 << 4,
         
         /// <summary>
-        /// Servo axis target positions, speeds, points (14 axes × 10 registers = 140 registers)
+        /// Servo axis target positions, speeds, points (14 axes x 10 registers = 140 registers)
         /// Active when: ModelConfig is active (for position saving)
         /// </summary>
         ServoTargets = 1 << 5,
         
         /// <summary>
-        /// Servo HMI jog buttons (14 axes × 11 buttons = 154 registers)
+        /// Servo HMI jog buttons (14 axes x 11 buttons = 154 registers)
         /// Active when: RobotJogWindow is active (for write operations)
         /// </summary>
         ServoJogButtons = 1 << 6,
         
         /// <summary>
-        /// Servo HMI jog lamps (14 axes × 4 lamps = 56 registers)
+        /// Servo HMI jog lamps (14 axes x 4 lamps = 56 registers)
         /// Active when: RobotJogWindow is active (for visual feedback)
         /// </summary>
         ServoJogLamps = 1 << 7,
         
         /// <summary>
-        /// Servo HMI position buttons and lamps (14 axes × 22 = 308 registers)
+        /// Servo HMI position buttons and lamps (14 axes x 22 = 308 registers)
         /// Active when: Rarely needed (disable by default)
         /// </summary>
         ServoPositionButtons = 1 << 8,
@@ -71,10 +71,10 @@ namespace HaengSungAOI_WPF.Core.PLC
         VisionTriggers = 1 << 9,
         
         /// <summary>
-        /// HMI select buttons and lamps
-        /// Active when: Rarely needed
+        /// Tray quantities and slot status
+        /// Active when: Always
         /// </summary>
-        HMISelect = 1 << 10,
+        Quantities = 1 << 10,
         
         /// <summary>
         /// Machine alarms and errors from PLC (MW9000-MW9099)
@@ -119,7 +119,7 @@ namespace HaengSungAOI_WPF.Core.PLC
         /// PLC read polling interval in milliseconds
         /// How often the PLC data points are read
         /// Recommended: 100-1000ms depending on response requirements
-        /// Default: 1000ms (1 second)
+        /// Default: 100ms
         /// </summary>
         public const int PLC_READ_INTERVAL_MS = 100;
 
@@ -189,6 +189,7 @@ namespace HaengSungAOI_WPF.Core.PLC
             PLCMonitoringGroup.MainWindowHMILamps | 
             PLCMonitoringGroup.MainWindowHMIButtons |
             PLCMonitoringGroup.ServoErrors |
+            PLCMonitoringGroup.Quantities |
             PLCMonitoringGroup.MachineAlarms;
 
         /// <summary>
@@ -201,6 +202,7 @@ namespace HaengSungAOI_WPF.Core.PLC
             PLCMonitoringGroup.ServoErrors |
             PLCMonitoringGroup.ServoPositions |
             PLCMonitoringGroup.ServoTargets |
+            PLCMonitoringGroup.Quantities |
             PLCMonitoringGroup.MachineAlarms;
 
         /// <summary>
@@ -212,6 +214,7 @@ namespace HaengSungAOI_WPF.Core.PLC
             PLCMonitoringGroup.ServoPositions |
             PLCMonitoringGroup.ServoJogButtons |
             PLCMonitoringGroup.ServoJogLamps |
+            PLCMonitoringGroup.Quantities |
             PLCMonitoringGroup.MachineAlarms;
 
         /// <summary>
@@ -224,6 +227,7 @@ namespace HaengSungAOI_WPF.Core.PLC
             PLCMonitoringGroup.ServoErrors |
             PLCMonitoringGroup.ServoPositions |
             PLCMonitoringGroup.VisionTriggers |
+            PLCMonitoringGroup.Quantities |
             PLCMonitoringGroup.MachineAlarms;
 
         #endregion
@@ -317,5 +321,3 @@ namespace HaengSungAOI_WPF.Core.PLC
         #endregion
     }
 }
-
-

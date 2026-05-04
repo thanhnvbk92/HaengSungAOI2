@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Timers;
+using System.Linq;
+using HaengSungAOI_WPF;
 using HaengSungAOI_WPF.Services.Machine;
 
 namespace HaengSungAOI_WPF.Core.PLC
@@ -483,77 +485,28 @@ Axis = axis;
     /// Monitors all servo axes continuously and provides status updates
     /// Integrates with IPlcService for data reading
     /// </summary>
-    public class ServoMonitor : IServoMonitorService, IDisposable
+        public class ServoMonitor : IServoMonitorService, IDisposable
     {
         private readonly IPlcService _plcService;
         private readonly Dictionary<ServoAxis, ServoAxisStatus> _axisStatuses;
-        private readonly Timer _updateTimer;
         private bool _isMonitoring;
         private bool _disposed;
 
-        /// <summary>
-        /// Fired when any servo axis status changes
-        /// </summary>
         public event EventHandler<ServoStatusChangedEventArgs> StatusChanged;
-
-        /// <summary>
-     /// Fired when a servo error is detected
-   /// </summary>
         public event EventHandler<ServoErrorEventArgs> ErrorDetected;
+        public event EventHandler<ServoErrorEventArgs> ErrorCleared;
+        public event EventHandler<ServoAxis> MoveCompleted;
 
-        /// <summary>
-        /// Fired when a servo error is cleared
-  /// </summary>
- public event EventHandler<ServoErrorEventArgs> ErrorCleared;
-
-      /// <summary>
-        /// Fired when a move is completed on any axis
-        /// </summary>
-      public event EventHandler<ServoAxis> MoveCompleted;
-
-        /// <summary>
-    /// Gets all axis statuses
-        /// </summary>
-   public IReadOnlyDictionary<ServoAxis, ServoAxisStatus> AxisStatuses => _axisStatuses;
-
-        /// <summary>
-      /// Gets whether monitoring is active
-        /// </summary>
+        public IReadOnlyDictionary<ServoAxis, ServoAxisStatus> AxisStatuses => _axisStatuses;
         public bool IsMonitoring => _isMonitoring;
 
-        /// <summary>
-        /// Create a new ServoMonitor with default settings
-        /// </summary>
-        public ServoMonitor()
-        {
-            _plcService = App.PlcService;
-            _axisStatuses = new Dictionary<ServoAxis, ServoAxisStatus>();
+        public ServoMonitor() : this(App.PlcService) { }
 
-            // Initialize status for all axes
-            foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
-            {
-                var status = new ServoAxisStatus(axis);
-                status.PropertyChanged += OnAxisPropertyChanged;
-                _axisStatuses[axis] = status;
-            }
-
-            // Setup update timer (100ms default)
-            _updateTimer = new Timer(100);
-            _updateTimer.Elapsed += OnUpdateTimerElapsed;
-            _updateTimer.AutoReset = true;
-        }
-
-        /// <summary>
-        /// Create a new ServoMonitor
-        /// </summary>
-        /// <param name="plcService">IPlcService for communication</param>
-        /// <param name="updateIntervalMs">Update interval in milliseconds (default 100ms)</param>
         public ServoMonitor(IPlcService plcService, int updateIntervalMs = 100)
         {
             _plcService = plcService ?? throw new ArgumentNullException(nameof(plcService));
             _axisStatuses = new Dictionary<ServoAxis, ServoAxisStatus>();
 
-            // Initialize status for all axes
             foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
             {
                 var status = new ServoAxisStatus(axis);
@@ -561,382 +514,192 @@ Axis = axis;
                 _axisStatuses[axis] = status;
             }
 
-            // Setup update timer
-            _updateTimer = new Timer(updateIntervalMs);
-            _updateTimer.Elapsed += OnUpdateTimerElapsed;
-            _updateTimer.AutoReset = true;
+            if (_plcService != null)
+            {
+                _plcService.TagChanged += OnPlcTagChanged;
+            }
         }
 
-      /// <summary>
-        /// Start continuous monitoring
-  /// </summary>
         public void StartMonitoring()
         {
-     if (_isMonitoring) return;
-
-     _isMonitoring = true;
-            _updateTimer.Start();
-        Utils.Logger.Info("ServoMonitor", "Started continuous servo monitoring");
+            if (_isMonitoring) return;
+            _isMonitoring = true;
+            ForceUpdate(); // Initial sync
+            Utils.Logger.Info("ServoMonitor", "Started reactive servo monitoring");
         }
 
-        /// <summary>
-        /// Stop continuous monitoring
-        /// </summary>
-      public void StopMonitoring()
-     {
-     if (!_isMonitoring) return;
-
+        public void StopMonitoring()
+        {
             _isMonitoring = false;
-      _updateTimer.Stop();
-   Utils.Logger.Info("ServoMonitor", "Stopped servo monitoring");
+            Utils.Logger.Info("ServoMonitor", "Stopped servo monitoring");
         }
 
-      /// <summary>
-        /// Get status for a specific axis
-   /// </summary>
-        public ServoAxisStatus GetAxisStatus(ServoAxis axis)
-        {
-       return _axisStatuses.TryGetValue(axis, out var status) ? status : null;
-        }
+        public ServoAxisStatus GetAxisStatus(ServoAxis axis) => _axisStatuses.TryGetValue(axis, out var status) ? status : null;
+        public double GetCurrentPosition(ServoAxis axis) => GetAxisStatus(axis)?.CurrentPosition ?? 0;
+        public double GetCurrentSpeed(ServoAxis axis) => GetAxisStatus(axis)?.CurrentSpeed ?? 0;
+        public double GetErrorCode(ServoAxis axis) => GetAxisStatus(axis)?.ErrorCode ?? 0;
+        public bool HasError(ServoAxis axis) => GetAxisStatus(axis)?.HasError ?? false;
+        
+        public bool HasAnyError() => _axisStatuses.Values.Any(s => s.HasError);
+        public List<ServoAxis> GetAxesWithErrors() => _axisStatuses.Where(kvp => kvp.Value.HasError).Select(kvp => kvp.Key).ToList();
+        public bool IsAxisMoving(ServoAxis axis) => GetAxisStatus(axis)?.IsMoving ?? false;
+        public bool IsAxisHomed(ServoAxis axis) => GetAxisStatus(axis)?.ORGFound ?? false;
 
- /// <summary>
-   /// Get current position for an axis
-      /// </summary>
-        public double GetCurrentPosition(ServoAxis axis)
-        {
-            return _axisStatuses.TryGetValue(axis, out var status) ? status.CurrentPosition : 0;
-        }
-
-        /// <summary>
-        /// Get current speed for an axis
-        /// </summary>
-        public double GetCurrentSpeed(ServoAxis axis)
-{
-            return _axisStatuses.TryGetValue(axis, out var status) ? status.CurrentSpeed : 0;
- }
-
-        /// <summary>
-        /// Get error code for an axis
-        /// </summary>
-        public double GetErrorCode(ServoAxis axis)
-        {
-       return _axisStatuses.TryGetValue(axis, out var status) ? status.ErrorCode : 0;
- }
-
-        /// <summary>
-        /// Check if an axis has an error
-        /// </summary>
-        public bool HasError(ServoAxis axis)
-  {
-    return _axisStatuses.TryGetValue(axis, out var status) && status.HasError;
-        }
-
-        /// <summary>
-    /// Check if any axis has an error
-        /// </summary>
-  public bool HasAnyError()
-        {
-    foreach (var kvp in _axisStatuses)
-            {
-      if (kvp.Value.HasError)
-     return true;
-    }
-      return false;
-        }
-
-        /// <summary>
- /// Get all axes with errors
-        /// </summary>
-     public List<ServoAxis> GetAxesWithErrors()
- {
-          var result = new List<ServoAxis>();
-  foreach (var kvp in _axisStatuses)
-      {
-     if (kvp.Value.HasError)
-            result.Add(kvp.Key);
-  }
-       return result;
-        }
-
-        /// <summary>
-        /// Check if an axis is moving
-      /// </summary>
-        public bool IsAxisMoving(ServoAxis axis)
-        {
-            return _axisStatuses.TryGetValue(axis, out var status) && status.IsMoving;
-    }
-
-        /// <summary>
-        /// Check if an axis has completed homing
-        /// </summary>
-        public bool IsAxisHomed(ServoAxis axis)
-  {
-       return _axisStatuses.TryGetValue(axis, out var status) && status.ORGFound;
-        }
-
-        /// <summary>
-        /// Force an immediate update of all axis statuses from PLC
-        /// </summary>
         public void ForceUpdate()
         {
-     foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
-        {
-     UpdateAxisFromPLC(axis);
-            }
-  }
-
-        private void OnUpdateTimerElapsed(object sender, ElapsedEventArgs e)
-    {
-    if (!_isMonitoring) return;
-
-            try
-{
-    ForceUpdate();
-            }
-     catch (Exception ex)
+            foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
             {
-     Utils.Logger.Error("ServoMonitor", $"Error during update: {ex.Message}", ex);
-    }
+                UpdateAxisFromPLC(axis);
+            }
         }
 
-        private void OnPLCDataChanged(object sender, EventArgs e)
+        private void OnPlcTagChanged(object sender, TagChangedEventArgs e)
         {
-            // Note: HmiPlcService handles polling internally. 
-            // We can either respond to specific tag changes if IPlcService exposes them,
-            // or just let ForceUpdate handle it via the timer.
+            if (!_isMonitoring) return;
+
+            string[] parts = e.TagName.Split('_');
+            if (parts.Length < 2) return;
+
+            string axisName = parts[0];
+            string paramName = string.Join("_", parts.Skip(1));
+
+            var axisStatus = _axisStatuses.Values.FirstOrDefault(s => s.AxisName == axisName);
+            if (axisStatus == null) return;
+
+            try { UpdateStatusFromTagValue(axisStatus, paramName, e.NewValue); }
+            catch (Exception ex) { Utils.Logger.Error("ServoMonitor", $"Error updating status for {e.TagName}: {ex.Message}"); }
+        }
+
+        private void UpdateStatusFromTagValue(ServoAxisStatus status, string paramName, object value)
+        {
+            switch (paramName)
+            {
+                case "CurrentPosition": status.CurrentPosition = Convert.ToDouble(value); break;
+                case "CurrentSpeed": status.CurrentSpeed = Convert.ToDouble(value); break;
+                case "ErrorCode":
+                    double oldError = status.ErrorCode;
+                    double newError = Convert.ToDouble(value);
+                    status.ErrorCode = newError;
+                    if (oldError == 0 && newError != 0) ErrorDetected?.Invoke(this, new ServoErrorEventArgs(status.Axis, newError));
+                    else if (oldError != 0 && newError == 0) ErrorCleared?.Invoke(this, new ServoErrorEventArgs(status.Axis, 0));
+                    break;
+                case "OperationStatus": status.OperationStatus = Convert.ToDouble(value); break;
+                case "ORGFound": status.ORGFound = Convert.ToUInt16(value) != 0; break;
+                case "MoveCompleted":
+                    bool oldMoveCompleted = status.MoveCompleted;
+                    bool newMoveCompleted = Convert.ToUInt16(value) != 0;
+                    status.MoveCompleted = newMoveCompleted;
+                    if (!oldMoveCompleted && newMoveCompleted) MoveCompleted?.Invoke(this, status.Axis);
+                    break;
+                case "TargetPosition": status.TargetPosition = Convert.ToDouble(value); break;
+                case "TargetSpeed": status.TargetSpeed = Convert.ToDouble(value); break;
+                case "CurrentPoint": status.CurrentPoint = Convert.ToInt32(value); break;
+            }
+            status.LastUpdated = DateTime.Now;
         }
 
         private void UpdateAxisFromPLC(ServoAxis axis)
         {
-            // Skip if no PLC connection
-            if (_plcService == null || !_plcService.IsConnected)
-                return;
+            if (_plcService == null || !_plcService.IsConnected || !_axisStatuses.TryGetValue(axis, out var status)) return;
 
-            if (!_axisStatuses.TryGetValue(axis, out var status))
-                return;
-
-            string axisName = ServoAddressCalculator.GetAxisDisplayName(axis);
-
+            string axisName = status.AxisName;
             try
             {
-                // Read current position
-                double oldPos = status.CurrentPosition;
                 status.CurrentPosition = _plcService.GetDoubleValue($"{axisName}_CurrentPosition");
-                
-                // Read current speed
                 status.CurrentSpeed = _plcService.GetDoubleValue($"{axisName}_CurrentSpeed");
                 
-                // Read error code
                 double oldError = status.ErrorCode;
                 double newError = _plcService.GetDoubleValue($"{axisName}_ErrorCode");
                 status.ErrorCode = newError;
+                if (oldError == 0 && newError != 0) ErrorDetected?.Invoke(this, new ServoErrorEventArgs(axis, newError));
+                else if (oldError != 0 && newError == 0) ErrorCleared?.Invoke(this, new ServoErrorEventArgs(axis, 0));
 
-                // Detect error state changes
-                if (oldError == 0 && newError != 0)
-                {
-                    ErrorDetected?.Invoke(this, new ServoErrorEventArgs(axis, newError));
-                }
-                else if (oldError != 0 && newError == 0)
-                {
-                    ErrorCleared?.Invoke(this, new ServoErrorEventArgs(axis, 0));
-                }
-
-                // Read operation status
                 status.OperationStatus = _plcService.GetDoubleValue($"{axisName}_OperationStatus");
-
-                // Read ORG found
                 status.ORGFound = _plcService.GetUInt16Value($"{axisName}_ORGFound") != 0;
-
-                // Read move completed
+                
                 bool oldMoveCompleted = status.MoveCompleted;
                 bool newMoveCompleted = _plcService.GetUInt16Value($"{axisName}_MoveCompleted") != 0;
                 status.MoveCompleted = newMoveCompleted;
+                if (!oldMoveCompleted && newMoveCompleted) MoveCompleted?.Invoke(this, axis);
 
-                // Detect move completion
-                if (!oldMoveCompleted && newMoveCompleted)
-                {
-                    MoveCompleted?.Invoke(this, axis);
-                }
-
-                // Read target position
                 status.TargetPosition = _plcService.GetDoubleValue($"{axisName}_TargetPosition");
-
-                // Read target speed
                 status.TargetSpeed = _plcService.GetDoubleValue($"{axisName}_TargetSpeed");
-
-                // Read current point
                 status.CurrentPoint = _plcService.GetUInt16Value($"{axisName}_CurrentPoint");
-
                 status.LastUpdated = DateTime.Now;
             }
-            catch (Exception ex)
-            {
-                Utils.Logger.Error("ServoMonitor", $"Error updating axis {axisName}: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Format raw value for debug logging
-        /// </summary>
-        private string FormatRawValue(object value)
-        {
-      if (value == null) return "null";
-
-            if (value is ushort[] registers)
-   {
-        if (registers.Length == 0) return "ushort[0]";
-        if (registers.Length <= 8)
-      {
-       return $"ushort[{registers.Length}]: [{string.Join(", ", registers)}]";
-      }
-      return $"ushort[{registers.Length}]: [{registers[0]}, {registers[1]}, {registers[2]}, {registers[3]}, ...]";
-     }
-
-        if (value is ushort singleReg)
-    {
-    return $"ushort: {singleReg} (0x{singleReg:X4})";
-            }
-
-            return $"{value.GetType().Name}: {value}";
+            catch (Exception ex) { Utils.Logger.Error("ServoMonitor", $"Error updating axis {axisName}: {ex.Message}"); }
         }
 
         private void OnAxisPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-          if (sender is ServoAxisStatus status)
-            {
-         StatusChanged?.Invoke(this, new ServoStatusChangedEventArgs(status.Axis, status, e.PropertyName));
-            }
+            if (sender is ServoAxisStatus status)
+                StatusChanged?.Invoke(this, new ServoStatusChangedEventArgs(status.Axis, status, e.PropertyName));
         }
 
-        /// <summary>
-        /// Get a summary of all axis statuses
-        /// </summary>
         public string GetStatusSummary()
-   {
-var sb = new System.Text.StringBuilder();
-    sb.AppendLine("=== Servo Monitor Status ===");
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("=== Servo Monitor Status ===");
             sb.AppendLine($"Monitoring: {_isMonitoring}");
-     sb.AppendLine();
-
-            foreach (var kvp in _axisStatuses)
- {
-       var status = kvp.Value;
-   sb.AppendLine($"{status.AxisName} ({status.UnitName}):");
-   sb.AppendLine($"  Position: {status.CurrentPosition:F3}");
-        sb.AppendLine($"  Speed: {status.CurrentSpeed:F1}");
-    sb.AppendLine($"  Error: {status.ErrorCode} {(status.HasError ? "[ERROR]" : "")}");
-         sb.AppendLine($"  ORG: {(status.ORGFound ? "Yes" : "No")}");
-       sb.AppendLine($"  Moving: {(status.IsMoving ? "Yes" : "No")}");
-        sb.AppendLine($"  Last Update: {status.LastUpdated:HH:mm:ss.fff}");
+            sb.AppendLine();
+            foreach (var status in _axisStatuses.Values)
+            {
+                sb.AppendLine($"{status.AxisName} ({status.UnitName}):");
+                sb.AppendLine($"  Position: {status.CurrentPosition:F3}");
+                sb.AppendLine($"  Speed: {status.CurrentSpeed:F1}");
+                sb.AppendLine($"  Error: {status.ErrorCode} {(status.HasError ? "[ERROR]" : "")}");
+                sb.AppendLine($"  ORG: {(status.ORGFound ? "Yes" : "No")}");
+                sb.AppendLine($"  Moving: {(status.IsMoving ? "Yes" : "No")}");
+                sb.AppendLine($"  Last Update: {status.LastUpdated:HH:mm:ss.fff}");
                 sb.AppendLine();
             }
-
-      return sb.ToString();
+            return sb.ToString();
         }
 
-        /// <summary>
-        /// Get servo position for a specific robot/position/axis combination
-  /// This provides a simple string-based API for UI code
-        /// </summary>
-        /// <param name="robotName">Robot name: "Infeed", "Transfer", "Outfeed", "Inspect1", "Inspect2"</param>
-      /// <param name="positionName">Position name (not used for current position, reserved for future use)</param>
-        /// <param name="axisName">Axis name: "X", "Y", "Z", "R", "C"</param>
-        /// <returns>Current position of the specified axis</returns>
         public float GetServoPosition(string robotName, string positionName, string axisName)
-     {
-   ServoAxis? axis = MapToServoAxis(robotName, axisName);
-   if (axis.HasValue)
         {
-            return (float)GetCurrentPosition(axis.Value);
-            }
-          return 0f;
+            ServoAxis? axis = MapToServoAxis(robotName, axisName);
+            return axis.HasValue ? (float)GetCurrentPosition(axis.Value) : 0f;
         }
 
-        /// <summary>
-        /// Maps robot name and axis name to ServoAxis enum
-        /// </summary>
         private ServoAxis? MapToServoAxis(string robotName, string axisName)
         {
-      string robot = robotName?.ToLower() ?? "";
-         string axis = axisName?.ToUpper() ?? "";
-
+            string robot = robotName?.ToLower() ?? "";
+            string axis = axisName?.ToUpper() ?? "";
             switch (robot)
             {
-    case "infeed":
-     switch (axis)
-                    {
-      case "X": return ServoAxis.X1;
-           case "Y": return ServoAxis.Y1;
-     case "R":
-       case "C": return ServoAxis.C1;
-        }
-       break;
-
-       case "transfer":
-           switch (axis)
-             {
-     case "X": return ServoAxis.X2;
-         case "Z": return ServoAxis.Z2;
-          }
-    break;
-
+                case "infeed":
+                    switch (axis) { case "X": return ServoAxis.X1; case "Y": return ServoAxis.Y1; case "C": return ServoAxis.C1; }
+                    break;
+                case "transfer":
+                    switch (axis) { case "X": return ServoAxis.X2; case "Z": return ServoAxis.Z2; }
+                    break;
                 case "outfeed":
-        switch (axis)
-  {
-      case "X": return ServoAxis.X3;
-      case "Y": return ServoAxis.Y3;
-      }
-        break;
-
-    case "inspect1":
-     switch (axis)
-              {
-       case "Z": return ServoAxis.Z4;
-     case "C":
-  case "R": return ServoAxis.C4;
-    }
-        break;
-
-              case "inspect2":
-      switch (axis)
-             {
-     case "Z": return ServoAxis.Z5;
-       case "C":
-                case "R": return ServoAxis.C5;
-          }
-      break;
+                    switch (axis) { case "X": return ServoAxis.X3; case "Y": return ServoAxis.Y3; }
+                    break;
+                case "inspect1":
+                    switch (axis) { case "Z": return ServoAxis.Z4; case "C": case "R": return ServoAxis.C4; }
+                    break;
+                case "inspect2":
+                    switch (axis) { case "Z": return ServoAxis.Z5; case "C": case "R": return ServoAxis.C5; }
+                    break;
             }
-
             return null;
-  }
-
-        /// <summary>
-        /// Connect to PLC and start monitoring
-        /// </summary>
-        public void Connect()
-        {
-            if (_plcService != null && _plcService.IsConnected)
-            {
-                StartMonitoring();
-            }
         }
+
+        public void Connect() { if (_plcService?.IsConnected == true) StartMonitoring(); }
 
         public void Dispose()
         {
-       if (_disposed) return;
+            if (_disposed) return;
             _disposed = true;
-
             StopMonitoring();
-     _updateTimer?.Dispose();
-
-    foreach (var status in _axisStatuses.Values)
-         {
-        status.PropertyChanged -= OnAxisPropertyChanged;
-          }
-
-   _axisStatuses.Clear();
+            if (_plcService != null) _plcService.TagChanged -= OnPlcTagChanged;
+            foreach (var status in _axisStatuses.Values) status.PropertyChanged -= OnAxisPropertyChanged;
+            _axisStatuses.Clear();
         }
-  }
+    }
 }
+
 
 

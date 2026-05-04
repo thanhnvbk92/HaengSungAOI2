@@ -46,6 +46,7 @@ namespace HaengSungAOI_WPF.Services.Machine
         public event EventHandler<VisionTriggerEventArgs> VisionTriggered;
         public event EventHandler<AlarmEventArgs> AlarmChanged;
         public event EventHandler<TrayUpdateEventArgs> TrayUpdated;
+        public event EventHandler<TagChangedEventArgs> TagChanged;
         public event EventHandler<bool> ConnectionStatusChanged;
         public event EventHandler<Dictionary<string, bool>> HmiLampStateChanged;
 
@@ -147,6 +148,23 @@ namespace HaengSungAOI_WPF.Services.Machine
                     
                     _hmiService.Engine.AddTag(kvp.Key, addr, type, $"Robot Data: {kvp.Key}");
                 }
+                // Machine Control Tags
+                _hmiService.Engine.AddTag("HMI_Start", "MW4", DataType.Int16);
+                _hmiService.Engine.AddTag("HMI_Stop", "MW5", DataType.Int16);
+                _hmiService.Engine.AddTag("HMI_Auto_PB", "MW0", DataType.Int16);
+                _hmiService.Engine.AddTag("HMI_Manual_PB", "MW1", DataType.Int16);
+
+                // Barcode and Slot Tags (for monitoring)
+                _hmiService.Engine.AddTag("PCB_Slot", "MW448", DataType.Int16);
+                
+                // Station Barcodes
+                _hmiService.Engine.AddTag("Barcode_Station1", "MW450", DataType.UInt16, "Station 1 Barcode Start", 10);
+                _hmiService.Engine.AddTag("Barcode_FinalOk", "MW460", DataType.UInt16, "Final OK Barcode Start", 10);
+                _hmiService.Engine.AddTag("Barcode_FinalNg", "MW470", DataType.UInt16, "Final NG Barcode Start", 10);
+                
+                // Tray Quantities
+                _hmiService.Engine.AddTag("PCB_Trays", "MW444", DataType.Int16);
+                _hmiService.Engine.AddTag("Blank_Trays", "MW445", DataType.Int16);
 
                 // Register Servo Monitoring and HMI Controls
                 foreach (ServoAxis axis in Enum.GetValues(typeof(ServoAxis)))
@@ -171,6 +189,12 @@ namespace HaengSungAOI_WPF.Services.Machine
                     // Axis HMI Lamps
                     _hmiService.Engine.AddTag($"HMI_Lamp_{axisName}_ServoON_PB", $"MW{ServoAddressCalculator.GetHMILampAddress(axis, ServoHMIButton.ServoON)}", DataType.Int16);
                     _hmiService.Engine.AddTag($"HMI_Lamp_{axisName}_ORG_PB", $"MW{ServoAddressCalculator.GetHMILampAddress(axis, ServoHMIButton.ORG)}", DataType.Int16);
+                }
+
+                // After adding all tags, subscribe to PropertyChanged for all of them to enable reactive hub
+                foreach (var tag in _hmiService.Engine.Tags)
+                {
+                    tag.PropertyChanged += OnTagPropertyChanged;
                 }
 
                 _logger.LogInformation("HmiPlcService Tags Initialized");
@@ -231,6 +255,14 @@ namespace HaengSungAOI_WPF.Services.Machine
                 bool isOn = Convert.ToUInt16(tag.Value ?? 0) != 0;
                 HmiLampStateChanged?.Invoke(this, new Dictionary<string, bool> { { tag.Name, isOn } });
             }
+            // Fire general TagChanged event for any value change
+            TagChanged?.Invoke(this, new TagChangedEventArgs(tag.Name, tag.Value));
+        }
+
+        public object GetTagValue(string tagName)
+        {
+            var tag = _hmiService.Engine.Tags.FirstOrDefault(t => t.Name == tagName);
+            return tag?.Value;
         }
 
         public void Start() => _hmiService.StartAsync();
@@ -342,19 +374,19 @@ namespace HaengSungAOI_WPF.Services.Machine
 
         public double GetDoubleValue(string tagName)
         {
-            var val = _hmiService.ReadTag(tagName);
+            var val = GetTagValue(tagName) ?? _hmiService.ReadTag(tagName);
             return val != null ? Convert.ToDouble(val) : 0.0;
         }
 
         public ushort GetUInt16Value(string tagName)
         {
-            var val = _hmiService.ReadTag(tagName);
+            var val = GetTagValue(tagName) ?? _hmiService.ReadTag(tagName);
             return val != null ? Convert.ToUInt16(val) : (ushort)0;
         }
 
         public short GetInt16Value(string tagName)
         {
-            var val = _hmiService.ReadTag(tagName);
+            var val = GetTagValue(tagName) ?? _hmiService.ReadTag(tagName);
             return val != null ? Convert.ToInt16(val) : (short)0;
         }
 
