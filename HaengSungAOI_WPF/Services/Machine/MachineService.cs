@@ -11,6 +11,7 @@ using HaengSungAOI_WPF.Services.Vision;
 using HaengSungAOI_WPF.Services.Database;
 using HaengSungAOI_WPF.Services.UI;
 using HaengSungAOI_WPF.Utils;
+using System.Configuration;
 
 namespace HaengSungAOI_WPF.Services.Machine
 {
@@ -116,8 +117,9 @@ namespace HaengSungAOI_WPF.Services.Machine
                 {
                     _visionService.LoadSolutionForModel(_currentModel);
                 }
-
-                _scanOutService.Open("COM7");
+                
+                string comPort = ConfigurationManager.AppSettings["ScanOut_ComPort"] ?? "COM7";
+                _scanOutService.Open(comPort);
 
                 _isInitialized = true;
                 _logger.LogInformation("Machine Service Initialized Successfully");
@@ -171,6 +173,25 @@ namespace HaengSungAOI_WPF.Services.Machine
         {
             _currentModel = model;
             _visionService.LoadSolutionForModel(model);
+        }
+
+        public void ReinitializeHardware()
+        {
+            try
+            {
+                _logger.LogInformation("Re-initializing hardware settings...");
+                
+                // Re-open ScanOut port with new settings
+                _scanOutService.Close();
+                string comPort = ConfigurationManager.AppSettings["ScanOut_ComPort"] ?? "COM7";
+                _scanOutService.Open(comPort);
+                
+                _logger.LogInformation($"Hardware re-initialized. ScanOut Port: {comPort}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to re-initialize hardware");
+            }
         }
 
 

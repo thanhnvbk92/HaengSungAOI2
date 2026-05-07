@@ -25,6 +25,7 @@ namespace HaengSungAOI_WPF.Services.Machine
         
         void ClearQueues();
         void UpdateModel(PCBModel model);
+        void ReinitializeHardware();
         
         bool EnableScanOut { get; set; }
         bool OverrideInspection { get; set; }

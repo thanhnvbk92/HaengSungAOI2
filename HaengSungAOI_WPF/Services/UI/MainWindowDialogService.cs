@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using HaengSungAOI_WPF.Views;
+using HaengSungAOI_WPF.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HaengSungAOI_WPF.Services.UI
 {
@@ -297,6 +299,20 @@ namespace HaengSungAOI_WPF.Services.UI
                 win.Owner = owner;
                 win.ShowDialog();
             }
+        }
+
+        public void ShowAlarmWindow(Window owner, string title, string message, string source = "PLC")
+        {
+            // Run on UI thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var viewModel = _serviceProvider.GetRequiredService<AlarmViewModel>();
+                viewModel.SetAlarm(title, message, source);
+                
+                var win = new AlarmWindow(viewModel);
+                win.Owner = owner;
+                win.ShowDialog();
+            });
         }
     }
 }

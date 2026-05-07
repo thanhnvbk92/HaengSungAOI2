@@ -63,6 +63,9 @@ namespace HaengSungAOI_WPF
             services.AddSingleton<IModelDatabaseManager, ModelDatabaseManager>();
             services.AddSingleton<IErrorService, ErrorService>();
             services.AddSingleton<MainWindowDialogService>();
+            services.AddSingleton<PlcDataHub>();
+            services.AddSingleton<IPlcDataHub>(sp => sp.GetRequiredService<PlcDataHub>());
+            services.AddSingleton<IMachineHmiService>(sp => sp.GetRequiredService<PlcDataHub>());
 
             // Machine & Hardware Services
             services.AddSingleton<IPlcService, HmiPlcService>();
@@ -72,7 +75,6 @@ namespace HaengSungAOI_WPF
             services.AddSingleton<IIoConfigService, IoConfigService>();
             services.AddSingleton<IHmiSimulatorService, HmiSimulatorService>();
             services.AddSingleton<IHmiService, HmiService>();
-            services.AddSingleton<IMachineHmiService, MachineHmiService>();
             services.AddSingleton<IServoMonitorService, HaengSungAOI_WPF.Core.PLC.ServoMonitor>();
             services.AddSingleton<IMachineService, MachineService>();
 
@@ -83,6 +85,7 @@ namespace HaengSungAOI_WPF
             services.AddTransient<HistoryViewModel>();
             services.AddTransient<ManualOperationsViewModel>();
             services.AddTransient<SettingsViewModel>();
+            services.AddTransient<AlarmViewModel>();
 
             // Windows
             services.AddSingleton<MainWindow>();
@@ -94,6 +97,7 @@ namespace HaengSungAOI_WPF
                 return new ErrorListWindow(machineService.Machine);
             });
             services.AddTransient<ModelConfig>();
+            services.AddTransient<AlarmWindow>();
         }
 
         protected override async void OnStartup(StartupEventArgs e)

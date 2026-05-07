@@ -11,6 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.IO.Ports;
+using System.Configuration;
+using System.Collections.Generic;
 
 namespace HaengSungAOI_WPF.ViewModels
 {
@@ -53,6 +56,24 @@ namespace HaengSungAOI_WPF.ViewModels
         public ICommand ReadAllCommand { get; }
         public ICommand WriteAllCommand { get; }
         public ICommand RefreshCommand { get; }
+        public ICommand SaveMachineSettingsCommand { get; }
+
+        private string _scanOutComPort;
+        public string ScanOutComPort
+        {
+            get => _scanOutComPort;
+            set => SetProperty(ref _scanOutComPort, value);
+        }
+
+        private int _scanOutBaudRate;
+        public int ScanOutBaudRate
+        {
+            get => _scanOutBaudRate;
+            set => SetProperty(ref _scanOutBaudRate, value);
+        }
+
+        public ObservableCollection<string> AvailableComPorts { get; } = new ObservableCollection<string>();
+        public List<int> AvailableBaudRates { get; } = new List<int> { 9600, 19200, 38400, 57600, 115200 };
 
         public SettingsViewModel(IMachineService machineService)
         {
@@ -63,8 +84,10 @@ namespace HaengSungAOI_WPF.ViewModels
             ReadAllCommand = new AsyncRelayCommand(ReadAll);
             WriteAllCommand = new AsyncRelayCommand(WriteAll);
             RefreshCommand = new RelayCommand(Refresh);
+            SaveMachineSettingsCommand = new RelayCommand(SaveMachineSettings);
 
             InitializeParameters();
+            LoadMachineSettings();
             UpdateConnectionStatus();
 
             if (_plcService != null)
@@ -264,8 +287,67 @@ namespace HaengSungAOI_WPF.ViewModels
 
         private void Refresh()
         {
+            RefreshComPorts();
             UpdateConnectionStatus();
             StatusText = "Status refreshed";
+        }
+
+        private void RefreshComPorts()
+        {
+            AvailableComPorts.Clear();
+            foreach (var port in SerialPort.GetPortNames().OrderBy(p => p))
+            {
+                AvailableComPorts.Add(port);
+            }
+        }
+
+        private void LoadMachineSettings()
+        {
+            RefreshComPorts();
+
+            ScanOutComPort = ConfigurationManager.AppSettings["ScanOut_ComPort"] ?? "COM7";
+            if (int.TryParse(ConfigurationManager.AppSettings["ScanOut_BaudRate"], out int baud))
+            {
+                ScanOutBaudRate = baud;
+            }
+            else
+            {
+                ScanOutBaudRate = 115200;
+            }
+
+            // Ensure the current port is in the list even if not currently detected
+            if (!string.IsNullOrEmpty(ScanOutComPort) && !AvailableComPorts.Contains(ScanOutComPort))
+            {
+                AvailableComPorts.Add(ScanOutComPort);
+            }
+        }
+
+        private void SaveMachineSettings()
+        {
+            try
+            {
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                
+                config.AppSettings.Settings.Remove("ScanOut_ComPort");
+                config.AppSettings.Settings.Add("ScanOut_ComPort", ScanOutComPort);
+                
+                config.AppSettings.Settings.Remove("ScanOut_BaudRate");
+                config.AppSettings.Settings.Add("ScanOut_BaudRate", ScanOutBaudRate.ToString());
+
+                config.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection("appSettings");
+
+                StatusText = "Machine settings saved successfully";
+                MessageBox.Show("Machine settings saved. Changes will take effect after restarting the service or re-initializing.", "Save Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Notify MachineService if possible to re-initialize hardware
+                _machineService.ReinitializeHardware();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("SettingsVM", $"Failed to save settings: {ex.Message}");
+                MessageBox.Show($"Failed to save settings: {ex.Message}", "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private string FormatValue(object value, string dataType)

@@ -8,6 +8,8 @@ using HaengSungAOI_WPF.Services;
 using HaengSungAOI_WPF.Services.Machine;
 using HaengSungAOI_WPF.Services.UI;
 using System.Windows.Input;
+using HaengSungAOI_WPF.Core;
+using HaengSungAOI_WPF.Core.PLC;
 
 namespace HaengSungAOI_WPF.ViewModels
 {
@@ -17,6 +19,8 @@ namespace HaengSungAOI_WPF.ViewModels
         private readonly IMachineService _machineService;
         private readonly IErrorService _errorService;
         private readonly MainWindowDialogService _dialogService;
+        private readonly IServoMonitorService _servoMonitor;
+        private readonly IPlcDataHub _plcHub;
         public HmiViewModel Hmi { get; }
 
         private string _currentEbrValue = "Not Set";
@@ -132,18 +136,36 @@ namespace HaengSungAOI_WPF.ViewModels
 
         public ObservableCollection<InspectionResult> InspectionHistory { get; } = new ObservableCollection<InspectionResult>();
 
-        public MainViewModel(IGlobalStateService globalState, IMachineService machineService, HmiViewModel hmi, IErrorService errorService, MainWindowDialogService dialogService)
+        public MainViewModel(IGlobalStateService globalState, IMachineService machineService, HmiViewModel hmi, IErrorService errorService, MainWindowDialogService dialogService, IServoMonitorService servoMonitor, IPlcDataHub plcHub)
         {
             _globalState = globalState;
             _machineService = machineService;
             _errorService = errorService;
             _dialogService = dialogService;
+            _servoMonitor = servoMonitor;
+            _plcHub = plcHub;
             Hmi = hmi;
+
+            _plcHub.PropertyChanged += OnPlcHubPropertyChanged;
 
             _machineService.OnRunningStateChanged += (running) => IsRunning = running;
             _machineService.OnStatusMessageChanged += (msg) => StatusMessage = msg;
             
             _errorService.ErrorsChanged += UpdateErrorStatus;
+
+            // Subscribe to Alarms and Errors for Auto-Popup
+            if (_machineService.PLC != null)
+            {
+                _machineService.PLC.AlarmChanged += OnPlcAlarmChanged;
+            }
+
+            if (_servoMonitor != null)
+            {
+                _servoMonitor.ErrorDetected += OnServoErrorDetected;
+            }
+
+            // Subscribe to System/Hardware Errors for Auto-Popup
+            MachineErrorList.Instance.ErrorAdded += OnSystemErrorAdded;
             
             // Đăng ký nhận kết quả Vision
             WeakReferenceMessenger.Default.Register<InspectionResult>(this, (r, m) =>
@@ -160,7 +182,23 @@ namespace HaengSungAOI_WPF.ViewModels
             // Khởi tạo trạng thái ban đầu
             CurrentModelName = _machineService.CurrentModel?.ModelName ?? "No Model Selected";
             UpdateErrorStatus();
+            UpdateTrayDisplay();
             IsInitialized = true;
+        }
+
+        private void OnPlcHubPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateTrayDisplay();
+            });
+        }
+
+        private void UpdateTrayDisplay()
+        {
+            PcbSlotText = $"{_plcHub.PcbSlot}/48";
+            PcbTrayQuantityText = _plcHub.PcbTrays.ToString();
+            BlankTrayQuantityText = _plcHub.BlankTrays.ToString();
         }
 
         private void UpdateErrorStatus()
@@ -264,6 +302,43 @@ namespace HaengSungAOI_WPF.ViewModels
         public System.Windows.Input.ICommand ExitApplicationCommand => new RelayCommand(ExitApplication);
         public System.Windows.Input.ICommand EditTrayQuantityCommand => new RelayCommand<string>(EditTrayQuantity);
 
+        private bool _isAlarmWindowOpen = false;
+
+        private void OnPlcAlarmChanged(object sender, AlarmEventArgs e)
+        {
+            if (e.IsActive && !_isAlarmWindowOpen)
+            {
+                _isAlarmWindowOpen = true;
+                // Run on UI thread via DialogService
+                _dialogService.ShowAlarmWindow(null, e.AlarmName, e.Message, "PLC Alarm");
+                _isAlarmWindowOpen = false;
+            }
+        }
+
+        private void OnServoErrorDetected(object sender, ServoErrorEventArgs e)
+        {
+            if (!_isAlarmWindowOpen)
+            {
+                _isAlarmWindowOpen = true;
+                string axisName = ServoAddressCalculator.GetAxisDisplayName(e.Axis);
+                string message = $"Servo Error detected on axis {axisName}.\nError Code: {e.ErrorCode}";
+                
+                _dialogService.ShowAlarmWindow(null, "SERVO ERROR", message, $"Servo: {axisName}");
+                _isAlarmWindowOpen = false;
+            }
+        }
+
+        private void OnSystemErrorAdded(object sender, MachineErrorEventArgs e)
+        {
+            // Skip Informational messages
+            if (e.Error.ErrorType != ErrorType.Information && !_isAlarmWindowOpen)
+            {
+                _isAlarmWindowOpen = true;
+                string title = e.Error.ErrorType.ToString().ToUpper() + " ERROR";
+                _dialogService.ShowAlarmWindow(null, title, e.Error.Message, e.Error.Source);
+                _isAlarmWindowOpen = false;
+            }
+        }
     }
 }
 

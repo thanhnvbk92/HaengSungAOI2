@@ -113,3 +113,5 @@ F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\vi\HaengSung
 F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\HaengSun.09F54FBC.Up2Date
 F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\HaengSungAOI_WPF.exe
 F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\HaengSungAOI_WPF.pdb
+F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\AlarmWindow.baml
+F:\Dev\Projects\AI Project\HaengSungAOI2\HaengSungAOI_WPF\obj\Debug\Views\AlarmWindow.g.cs
